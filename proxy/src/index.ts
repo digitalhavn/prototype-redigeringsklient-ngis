@@ -4,8 +4,11 @@ import 'dotenv/config';
 
 const app: Application = express();
 
-const NGIS_URL = process.env.NGIS_URL || 'ngis-url';
-const NGIS_TOKEN = process.env.NGIS_TOKEN || 'ngis-token';
+const NGIS_URL = process.env.NGIS_URL || 'http://ngis-url';
+const NGIS_USERNAME = process.env.NGIS_USERNAME || 'ngis-username';
+const NGIS_PASSWORD = process.env.NGIS_PASSWORD || 'ngis-password';
+const NGIS_TOKEN = Buffer.from(`${NGIS_USERNAME}:${NGIS_PASSWORD}`).toString('base64');
+
 const PORT = 8001;
 const BASE_HEADERS = {
   Authorization: `Basic ${NGIS_TOKEN}`,
