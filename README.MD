@@ -12,12 +12,13 @@
 
 #### Setup
 
-1. Lag en .env fil med `NGIS_URL` og `NGIS_TOKEN` variabler
+1. Naviger til `proxy` mappen
+2. Lag en .env fil med `NGIS_URL` og `NGIS_TOKEN` variabler
 
 ```
 NGIS_URL="url"
 NGIS_TOKEN="token"
 ```
 
-2. `npm install`
-3. `npm run dev`
+3. `npm install`
+4. `npm run dev`
