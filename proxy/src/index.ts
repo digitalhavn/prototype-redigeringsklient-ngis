@@ -22,9 +22,15 @@ const proxy: RequestHandler = createProxyMiddleware({
   logLevel: 'debug',
 });
 
-app.get('/datasets', proxy);
+app.get('/datasets', (req, res, next) => {
+  req.headers['accept'] = 'application/vnd.kartverket.ngis.datasets+json';
+  proxy(req, res, next);
+});
 
-app.get('/datasets/:datasetId', proxy);
+app.get('/datasets/:datasetId', (req, res, next) => {
+  req.headers['accept'] = 'application/vnd.kartverket.ngis.dataset+json';
+  proxy(req, res, next);
+});
 
 app.get('/datasets/:datasetId/features', (req, res, next) => {
   req.headers['accept'] = 'application/vnd.kartverket.sosi+json';
@@ -32,16 +38,20 @@ app.get('/datasets/:datasetId/features', (req, res, next) => {
 });
 
 app.get('/datasets/:datasetId/features/:localId/attributes', (req, res, next) => {
-  req.headers['accept'] = 'application/vnd.kartverket.ngis.attributes+json';
+  req.headers['accept'] = 'application/vnd.kartverket.ngis.attributes+json; version=1.0';
   proxy(req, res, next);
 });
 
 app.put('/datasets/:datasetId/features/:localId/attributes', (req, res, next) => {
-  req.headers['accept'] = 'application/vnd.kartverket.ngis.attributes+json';
+  req.headers['accept'] = 'application/vnd.kartverket.ngis.attributes+json; version=1.0';
+  req.headers['content-type'] = 'application/vnd.kartverket.ngis.attributes+json; version=1.0';
   proxy(req, res, next);
 });
 
-app.get('/datasets/:datasetId/schema', proxy);
+app.get('/datasets/:datasetId/schema', (req, res, next) => {
+  req.headers['accept'] = 'application/vnd.kartverket.ngis.dataset+json; version=2.0';
+  proxy(req, res, next);
+});
 
 app.listen(PORT, () => {
   console.log(`Server is listening at http://localhost:${PORT}`);
