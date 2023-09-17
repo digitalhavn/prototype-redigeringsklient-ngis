@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leaflet Kartklient</title>
+  </head>
+  <body>
+    <div id="editablePage" style="display: none">
+      <h2>Edit Marker Information</h2>
+      <form id="editForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" /><br />
+        <label for="description">Description:</label>
+        <textarea id="description" name="description"></textarea><br />
+        <button type="button" id="saveButton">Save</button>
+        <button type="button" id="cancelButton">Cancel</button>
+      </form>
+    </div>
+    <div id="map"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
