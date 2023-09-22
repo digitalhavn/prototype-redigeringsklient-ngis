@@ -1,96 +1,192 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS, NGIS_PROXY_URL } from './config.js';
-import L from 'leaflet';
+import L, { latLng, polyline } from 'leaflet';
 
+//@ts-ignore
+import { OpenStreetMapProvider } from 'leaflet-geosearch';
+
+/*
+STARTEN PÅ Å SETTE OPP LEAFLET SEARCH ALTERNATIV FOR TYPESCRIPT
+const provider = new OpenStreetMapProvider();
+
+// search
+const results = await provider.search({ query: input.value });
+const form = document.querySelector('form');
+const input = form.querySelector('input[type="text"]');
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const results = await provider.search({ query: input.value });
+  console.log(results); // » [{}, {}, {}, ...]
+});
+
+*/
+
+/*
+const lineObjects=["LastbegrensningsområdeGrense", "KaiområdeGrense", "Havnegjerde", "HavneanleggGrense", "Kaifront"]
+const pointObjects=["Beredskapspunkt", "Fortøyningsinnretning", "Kran", "Avfallspunkt", "Drivstofftilkobling", "ElKobling", "Fender",
+"HavnegjerdeInngang", "Havnesensor", "Kamera", "Toalett", "Tømmestasjon", "VAUttak","Havneanlegg"  ]
+const plygonObjects=["Lastbegrensningsområde", "Kaiområde","Slipp", "Havneområde", "AdministrativtHavneområde" ]
+*/
 //FUNCTIONS
-const getDatasets = async () => {
-  console.log('Loading datasets...');
-  const response = await fetch(`${NGIS_PROXY_URL}/datasets`);
-  const dataSets = await response.json();
-  console.log(dataSets);
-  const finalResponse = await getObjectData(dataSets);
-  console.log(finalResponse);
-  finalResponse.forEach(createLayer);
-};
-
-const getObjectData = async (dataSets: any[]) => {
-  console.log('Loading features...');
-  const promises = dataSets.map(async (item: { id: string }) => {
-    const response = await fetch(
-      `${NGIS_PROXY_URL}/datasets/${item.id}/features?crs_EPSG=4258&limit=100&references=all`,
-    );
-    return response.json();
+function swapNestedCoordinates(coordinates) {
+  // Function to swap latitude and longitude in nested coordinates
+  return coordinates.map(function (outerRing) {
+    return outerRing.map(function (coord) {
+      return [coord[1], coord[0]];
+    });
   });
+}
+function isValidLineStringFeature(feature) {
+  // Check if the feature has a 'geometry' property with type 'LineString'
+  if (feature && feature.geometry && feature.geometry.type === 'LineString') {
+    // Check if the 'coordinates' property exists and is an array
+    if (Array.isArray(feature.geometry.coordinates)) {
+      // Iterate through each set of coordinates and check if it's an array of two numbers
+      for (const coord of feature.geometry.coordinates) {
+        if (
+          !Array.isArray(coord) ||
+          coord.length !== 3 ||
+          typeof coord[0] !== 'number' ||
+          typeof coord[1] !== 'number' ||
 
-  return await Promise.all(promises);
-};
+          typeof coord[2] !== 'number'
+        ) {
+          // If any coordinate set is invalid, return false
+          return false;
+        }
+      }
+      // If all coordinates are valid, return true
+      return true;
+    }
+  }
+  // If any of the checks fail, return false
+  return false;
+}
+async function getDatasets(){
+  const response = await fetch(`${NGIS_PROXY_URL}/datasets`);
+  const dataSets=await response.json()
+  console.log(dataSets)
+  const finalResponse= await getObjectData(dataSets)
 
-interface FeatureCollection {
-  features: any[];
+  addToLayers(finalResponse)
+
 }
 
-const createLayer = (feature_collection: FeatureCollection) => {
-  console.log(feature_collection);
-  const newLayer: L.Layer[] | undefined = [];
-  feature_collection.features.forEach((item) => {
-    console.log(item);
-    if (!item.geometry?.coordinates) {
-      console.log('No coordinates');
-      console.log(item);
-    } else {
-      const newMarker = L.marker([item.geometry.coordinates[0], item.geometry.coordinates[1]], {
-        title: item.properties.featuretype,
-      }).bindPopup(item['name']);
-      newMarker.on('click', () => {
-        console.log('Klikket på marker');
+async function getObjectData(dataSets: any[]) {
+  const objectsData = await Promise.all(dataSets.map(async (item: { id: string; }) => {
+    const response = await fetch(
+      `${NGIS_PROXY_URL}/datasets/${item.id}/features?crs_EPSG=4258&references=all`,
+    );
+    
+     return response.json()
+  }));
+  
+  const mergedResults = objectsData.flatMap((data) => data.features);
+  console.log(mergedResults);
+  return mergedResults;
+}
 
-        // Populate the editable page with marker's information
-        const nameInput = document.getElementById('name') as HTMLInputElement | null;
-        if (nameInput) {
-          //@ts-ignore
-          nameInput.value = newMarker.title;
-        }
 
-        // Switch to edit mode
-        const editablePage = document.getElementById('editablePage');
-        if (editablePage) {
-          editablePage.style.display = 'block';
-        }
-      });
-      newLayer.push(newMarker);
+  function addToLayers(dataset: any[]){
+  dataset.forEach(function (feature) {
+  const type = feature.geometry.type;
+  const valid=true
+ 
+  if (typeof feature.geometry.coordinates==="undefined"){
+    valid=false
+    console.log("Ingen koordinater")
+    console.log(feature)
+
+  }
+  feature.geometry.coordinates.forEach(function (coordinate: { lenght: number; }) {
+    if (coordinate.lenght<2){
+      console.log(feature)
+      valid=false
     }
-  });
-  layerControl.addOverlay(L.layerGroup(newLayer), (Math.random() + 1).toString(36).substring(7));
-};
+  })
+  if(valid){
+  // Determine which layer to add the feature to based on its category
+  if (type === 'Point') {
+   
+    pointsLayer.addData(feature); // Add to Custom Name 1 layer
+  } else if (type === 'LineString') {
+    if (!isValidLineStringFeature(feature)){
+      console.log(feature)
+    }
+    else{
+      const coordinates = feature.geometry.coordinates;
+      const modifiedCoordinates = coordinates.map(function (coord) {
+      return [coord[1], coord[0]]; // Swap latitude and longitude
+    });
+    feature.geometry.coordinates=modifiedCoordinates
+      lineLayer.addData(feature); // Add to Custom Name 2 layer
 
-getDatasets();
+    }
+  }else if (type === 'Polygon'){
+    const coordinates = feature.geometry.coordinates;
+    const modifiedCoordinates = swapNestedCoordinates(coordinates);
+    feature.geometry.coordinates=modifiedCoordinates
+    polyLayer.addData(feature);
+  }
+
+  // You can add more conditions for different categories if needed
+}});
+console.log("Ferdig med å legge til")
+}
+
+const pointsLayer = L.geoJson(null, {
+  pointToLayer: function (feature) {
+   
+    // Create a marker for each point feature
+    return L.marker(feature.geometry.coordinates).bindPopup();
+  },
+});
+const lineLayer = L.geoJson(null);
+const polyLayer=L.geoJson(null);
+
+
+
+
+const layers={
+          'Points': pointsLayer,
+          'Lines': lineLayer,
+          'Polygons': polyLayer
+        }
+
+
+getDatasets()
 
 const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
 // Adding base maps
-const osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
+const osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', 
+MAP_OPTIONS).addTo(map);
 const standardMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+const wmsLayer = L.tileLayer.wms('https://openwms.statkart.no/skwms1/wms.havnedata');
 
-// Creating marker layers with options
-const OsloHavn = L.marker([59.902205, 10.740768300000013], {
-  title: 'Oslo',
-}).bindPopup('Oslo havn');
-const BergenHavn = L.marker([60.39207, 5.31195], { title: 'Bergen' }).bindPopup('Bergen havn');
+// Creating marker layers with options 
+const OsloHavn = L.marker([59.902205, 10.740768300000013],{title: "Oslo"}).bindPopup("Oslo havn");
+const BergenHavn = L.marker([60.39207, 5.31195], {title: "Bergen"}).bindPopup("Bergen havn")
 // Adding marker layers to a feature group
-const cities = L.layerGroup([OsloHavn, BergenHavn]).addTo(map);
+const cities = L.layerGroup([OsloHavn, BergenHavn]).addTo(map)
 const baseMaps = {
-  'OpenStreetMap.HOT': osmHOT,
-  Standard: standardMap,
+  "OpenStreetMap.HOT": osmHOT,
+  "Standard": standardMap,
+  "WMS": wmsLayer
 };
 const overlayMaps = {
-  Cities: cities,
+  "Cities": cities,
 };
-const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+const layerControl = L.control.layers(baseMaps, layers).addTo(map)
+
 
 // Save button click event handler
 document.getElementById('saveButton')?.addEventListener('click', () => {
   // Assuming 'marker' is declared and initialized somewhere in your code
+  
 
   // Update the marker's information with edited values
   const nameInput = document.getElementById('name') as HTMLInputElement | null;
