@@ -21,6 +21,11 @@
     "func-style": ["error", "expression"],
     "no-var": "error",
     "prefer-const": "error",
-    "prefer-template": "error"
+    "prefer-template": "error",
+    "camelcase": "warn",
+    "eqeqeq": "error",
+    "radix": "error",
+    "prefer-spread": "error",
+    "prefer-destructuring": ["error", { "array": false, "object": true }]
   }
 }
