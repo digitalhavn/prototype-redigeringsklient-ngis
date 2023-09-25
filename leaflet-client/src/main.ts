@@ -2,13 +2,18 @@ import './style.css';
 import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS } from './config.js';
 import L from 'leaflet';
-import { Feature } from 'geojson';
-import { getDatasets, getFeatureCollections } from './ngis-client.js';
-interface Layers {
-  [key: string]: any; // This specifies that the object can have any string key with any value type.
-}
-const handleSaveButtonClick = () => {
-  console.log('Saved');
+import { GeoJsonObject } from 'geojson';
+import { getDatasets, getFeatureCollections } from './ngisClient.js';
+
+const displayFeatureCollection = (featureCollection: GeoJsonObject[]) => {
+  L.geoJSON(featureCollection, {
+    coordsToLatLng: (coords) => {
+      return L.latLng(coords);
+    },
+    onEachFeature(feature, layer) {
+      layer.bindPopup(feature.properties.featuretype);
+    },
+  }).addTo(map);
 };
 const handleCancelButtonClick = () => {
   const editablePage = document.getElementById('markerInfo');
