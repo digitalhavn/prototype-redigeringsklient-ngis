@@ -4,7 +4,8 @@
 
 ## Installering av pakker
 
-`npm install -w <workspace>` eller `cd <workspace> && npm install`
+- `npm install --workspaces` for å installere pakker i alle workspaces
+- `npm install -w <workspace>` eller `cd <workspace> && npm install` for å installere pakker i ett workspace
 
 ## Leaflet Client
 
