@@ -1,8 +1,9 @@
 {
   "name": "proxy",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "",
   "main": "src/app.ts",
+  "private": true,
   "scripts": {
     "build": "tsc",
     "start": "tsc && ts-node dist/index.js",

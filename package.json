@@ -2,7 +2,10 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "dev": "lerna run dev --parallel",
+    "test": "lerna run test --stream",
+    "pre-commit": "lerna run lint,test --since develop"
   },
   "workspaces": [
     "leaflet-client",
