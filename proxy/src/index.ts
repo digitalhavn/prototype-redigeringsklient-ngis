@@ -21,6 +21,7 @@ const proxy: RequestHandler = createProxyMiddleware({
   headers: BASE_HEADERS,
   changeOrigin: true,
   logLevel: 'debug',
+  secure: false,
 });
 
 app.get('/datasets', (req, res, next) => {
