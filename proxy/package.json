@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "tsc && ts-node dist/index.js",
     "dev": "nodemon src/index.ts",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint . --ext .ts --max-warnings=0",
+    "lint:fix": "eslint --fix . && prettier --write .",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "test:watch": "vitest"
