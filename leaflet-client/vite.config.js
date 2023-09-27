@@ -9,7 +9,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       all: 'true',
-      exclude: [...configDefaults.exclude, '**/models/**', "**/*.d.ts"]
+      exclude: [...configDefaults.exclude, '**/models/**', '**/*.d.ts'],
     },
   },
 });
