@@ -1,8 +1,8 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
-import { START_LOCATION, MAP_OPTIONS } from './config.js';
+import { START_LOCATION, MAP_OPTIONS, WMS_PROXY_URL } from './config.js';
 import L from 'leaflet';
-import { GeoJsonObject, Feature } from 'geojson';
+import { Feature } from 'geojson';
 import { getDatasets, getFeatureCollections } from './ngis-client.js';
 interface Layers {
   [key: string]: any; // This specifies that the object can have any string key with any value type.
@@ -127,51 +127,28 @@ const layers: Layers = {};
 const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
 // Adding base maps
-const osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
-const standardMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-const wmsLayer = L.tileLayer.wms('https://openwms.statkart.no/skwms1/wms.havnedata');
+L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
 
-const baseMaps = {
-  'OpenStreetMap.HOT': osmHOT,
-  Standard: standardMap,
-  WMS: wmsLayer,
-};
+const wmsLayer = L.tileLayer.wms(`${WMS_PROXY_URL}`, {
+  //@ts-ignore
+  service: 'WMS',
+  version: '1.3.0',
+  request: 'GetMap',
+  format: 'image/png',
+  layers: 'havnedata',
+  CRS: 'EPSG:4326',
+  bbox: '57.021168,0.228508,71.516049,37.230461',
+  width: 400,
+  height: 300,
+  updateWhenIdle: true,
+  transparent: true,
+});
 
 const datasets = await getDatasets();
 const featureCollection = await getFeatureCollections(datasets);
-featureCollection.forEach((feature: GeoJsonObject) => {
+featureCollection.forEach((feature: Feature) => {
   const layer = getOrCreateLayer(feature);
   layer.addData(feature);
 });
-L.control.layers(baseMaps, layers).addTo(map);
-
-// Save button click event handler
-document.getElementById('saveButton')?.addEventListener('click', () => {
-  // Assuming 'marker' is declared and initialized somewhere in your code
-
-  // Update the marker's information with edited values
-  const nameInput = document.getElementById('name') as HTMLInputElement | null;
-  const descriptionInput = document.getElementById('description') as HTMLInputElement | null;
-
-  if (nameInput && descriptionInput) {
-    //@ts-ignore
-    marker.name = nameInput.value;
-    //@ts-ignore
-    marker.description = descriptionInput.value;
-  }
-
-  // Hide the editable page and return to view mode
-  const editablePage = document.getElementById('editablePage');
-  if (editablePage) {
-    editablePage.style.display = 'none';
-  }
-});
-
-// Cancel button click event handler
-document.getElementById('cancelButton')?.addEventListener('click', () => {
-  // Hide the editable page and discard any edits
-  const editablePage = document.getElementById('editablePage');
-  if (editablePage) {
-    editablePage.style.display = 'none';
-  }
-});
+L.control.layers(null, layers).addTo(map);
+wmsLayer.addTo(map);
