@@ -2,10 +2,10 @@ import './style.css';
 import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS } from './config.js';
 import L from 'leaflet';
-import { GeoJsonObject } from 'geojson';
-import { getDatasets, getFeatureCollections } from './ngis-client.js';
+import { FeatureCollection } from 'geojson';
+import { getDatasets, getFeatureCollections } from './ngisClient.js';
 
-const displayFeatureCollection = (featureCollection: GeoJsonObject[]) => {
+const displayFeatureCollection = (featureCollection: FeatureCollection) => {
   L.geoJSON(featureCollection, {
     coordsToLatLng: (coords) => {
       return L.latLng(coords);

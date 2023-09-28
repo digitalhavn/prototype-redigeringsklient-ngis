@@ -16,6 +16,16 @@
         "endOfLine": "auto"
       }
     ],
-    "no-unused-vars": "error"
+    "no-unused-vars": "error",
+    "prefer-arrow-callback": "warn",
+    "func-style": ["error", "expression"],
+    "no-var": "error",
+    "prefer-const": "error",
+    "prefer-template": "error",
+    "camelcase": "warn",
+    "eqeqeq": "error",
+    "radix": "error",
+    "prefer-spread": "error",
+    "prefer-destructuring": ["error", { "array": false, "object": true }]
   }
 }
