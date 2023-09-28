@@ -6,10 +6,13 @@ export const getDatasets = async () => {
 };
 
 export const getFeatureCollections = async (datasets: { access: string; id: string; name: string }[]) => {
-  return await Promise.all(
+  const objectsData = await Promise.all(
     datasets.map(async (item: { id: string }) => {
-      const response = await fetch(`${NGIS_PROXY_URL}/datasets/${item.id}/features?crs_EPSG=4326&limit=100`);
+      const response = await fetch(`${NGIS_PROXY_URL}/datasets/${item.id}/features?crs_EPSG=4258&references=all`);
       return response.json();
     }),
   );
+  const mergedResults = objectsData.flatMap((data) => data.features);
+  console.log(mergedResults);
+  return mergedResults;
 };
