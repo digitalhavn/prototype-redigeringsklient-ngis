@@ -2,7 +2,7 @@ import './style.css';
 import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS } from './config.js';
 import L from 'leaflet';
-import { GeoJsonObject, Feature } from 'geojson';
+import { Feature } from 'geojson';
 import { getDatasets, getFeatureCollections } from './ngis-client.js';
 interface Layers {
   [key: string]: any; // This specifies that the object can have any string key with any value type.
@@ -139,39 +139,8 @@ const baseMaps = {
 
 const datasets = await getDatasets();
 const featureCollection = await getFeatureCollections(datasets);
-featureCollection.forEach((feature: GeoJsonObject) => {
+featureCollection.forEach((feature: Feature) => {
   const layer = getOrCreateLayer(feature);
   layer.addData(feature);
 });
 L.control.layers(baseMaps, layers).addTo(map);
-
-// Save button click event handler
-document.getElementById('saveButton')?.addEventListener('click', () => {
-  // Assuming 'marker' is declared and initialized somewhere in your code
-
-  // Update the marker's information with edited values
-  const nameInput = document.getElementById('name') as HTMLInputElement | null;
-  const descriptionInput = document.getElementById('description') as HTMLInputElement | null;
-
-  if (nameInput && descriptionInput) {
-    //@ts-ignore
-    marker.name = nameInput.value;
-    //@ts-ignore
-    marker.description = descriptionInput.value;
-  }
-
-  // Hide the editable page and return to view mode
-  const editablePage = document.getElementById('editablePage');
-  if (editablePage) {
-    editablePage.style.display = 'none';
-  }
-});
-
-// Cancel button click event handler
-document.getElementById('cancelButton')?.addEventListener('click', () => {
-  // Hide the editable page and discard any edits
-  const editablePage = document.getElementById('editablePage');
-  if (editablePage) {
-    editablePage.style.display = 'none';
-  }
-});
