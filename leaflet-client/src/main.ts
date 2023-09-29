@@ -150,5 +150,7 @@ featureCollection.forEach((feature: Feature) => {
   const layer = getOrCreateLayer(feature);
   layer.addData(feature);
 });
+const loading = document.getElementById('loading-container')!;
+loading.style.display = 'none';
 L.control.layers(null, layers).addTo(map);
 wmsLayer.addTo(map);
