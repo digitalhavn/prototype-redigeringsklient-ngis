@@ -16,3 +16,13 @@ export const getFeatureCollections = async (datasets: { access: string; id: stri
   console.log(mergedResults);
   return mergedResults;
 };
+
+export const getSchema = async (datasets: { access: string; id: string; name: string }[]) => {
+  const schemas = await Promise.all(
+    datasets.map(async (item: { id: string }) => {
+      const response = await fetch(`${NGIS_PROXY_URL}/datasets/${item.id}/schema`);
+      return response.json();
+    }),
+  );
+  return schemas;
+};

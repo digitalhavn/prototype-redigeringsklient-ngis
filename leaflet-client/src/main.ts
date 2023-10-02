@@ -3,12 +3,27 @@ import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS, WMS_PROXY_URL } from './config.js';
 import L from 'leaflet';
 import { Feature } from 'geojson';
-import { getDatasets, getFeatureCollections } from './ngis-client.js';
+import { getDatasets, getFeatureCollections, getSchema } from './ngis-client.js';
+import Ajv, { ErrorObject } from 'ajv';
+
 interface Layers {
   [key: string]: any; // This specifies that the object can have any string key with any value type.
 }
-const handleSaveButtonClick = () => {
-  console.log('Saved');
+const findSchemaByTitle = (title: string) => {
+  const schema = schemas.find((schema) =>
+    schema.properties.features.items.anyOf.find((item: any) => item.title === title),
+  );
+
+  if (schema) {
+    const matchingItem = schema.properties.features.items.anyOf.find((item: any) => item.title === title);
+    return matchingItem || null; // Return the matching item or null if not found
+  }
+
+  return null;
+};
+const handleSaveButtonClick = (feature: { properties: any }) => {
+  const relevantSchema = findSchemaByTitle(feature.properties.featuretype);
+  console.log(relevantSchema);
 };
 const handleCancelButtonClick = () => {
   const editablePage = document.getElementById('markerInfo');
@@ -62,7 +77,7 @@ const onMarkerClick = (e: { target: { feature: { properties: any } } }) => {
   cancelButton.id = 'cancel';
 
   // Add event listeners to the buttons (you can define the event handlers)
-  saveButton.addEventListener('click', handleSaveButtonClick);
+  saveButton.addEventListener('click', () => handleSaveButtonClick(e.target.feature));
   cancelButton.addEventListener('click', handleCancelButtonClick);
 
   // Append the buttons to the div
@@ -76,7 +91,7 @@ const getOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
     if (feature.geometry.type === 'Point') {
-      layers[objectType] = L.geoJson(null, {
+      layers[objectType] = L.geoJson(undefined, {
         pointToLayer: function (feature) {
           // Create a marker for each point feature
           return L.marker([feature.geometry.coordinates[0], feature.geometry.coordinates[1]]).on(
@@ -90,7 +105,7 @@ const getOrCreateLayer = (feature: Feature) => {
       }); // .addTo(map);
     }
     if (feature.geometry.type === 'Polygon') {
-      layers[objectType] = L.geoJson(null, {
+      layers[objectType] = L.geoJson(undefined, {
         style: function () {
           // Define styles for polygons
           return { fillColor: 'blue', color: 'black', weight: 2 };
@@ -105,7 +120,7 @@ const getOrCreateLayer = (feature: Feature) => {
       });
     }
     if (feature.geometry.type === 'LineString') {
-      layers[objectType] = L.geoJson(null, {
+      layers[objectType] = L.geoJson(undefined, {
         style: function () {
           // Define styles for polygons
           return { color: 'red', weight: 3 };
@@ -145,6 +160,8 @@ const wmsLayer = L.tileLayer.wms(`${WMS_PROXY_URL}`, {
 });
 
 const datasets = await getDatasets();
+const schemas = await getSchema(datasets);
+console.log(schemas);
 const featureCollection = await getFeatureCollections(datasets);
 featureCollection.forEach((feature: Feature) => {
   const layer = getOrCreateLayer(feature);
@@ -152,5 +169,5 @@ featureCollection.forEach((feature: Feature) => {
 });
 const loading = document.getElementById('loading-container')!;
 loading.style.display = 'none';
-L.control.layers(null, layers).addTo(map);
+L.control.layers(undefined, layers).addTo(map);
 wmsLayer.addTo(map);

@@ -62,9 +62,8 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.5); /* Optional: Add a semi-transparent background overlay */
+  /*background-color: rgba(0, 0, 0, 0.5); /* Optional: Add a semi-transparent background overlay */
 }
-
 #loader {
   width: 100%;
   height: 100%;
@@ -82,6 +81,20 @@ h1 {
 #loader p {
   text-align: center;
   color: black; /* Optional: Set text color to white or your desired color */
+}
+/* Add animation keyframes for the spinning effect */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Apply the animation to the SVG element with ease-in-out timing */
+#loader img {
+  animation: spin 2s ease-in-out infinite; /* Adjust the duration and timing function as needed */
 }
 
 button {
