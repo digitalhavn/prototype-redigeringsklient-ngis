@@ -3,7 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS } from './config.js';
 import L from 'leaflet';
 import { Feature } from 'geojson';
-import { getDatasets, getFeatureCollections } from './ngis-client.js';
+import { getDatasets, getFeatureCollections } from './ngisClient';
 interface Layers {
   [key: string]: any; // This specifies that the object can have any string key with any value type.
 }

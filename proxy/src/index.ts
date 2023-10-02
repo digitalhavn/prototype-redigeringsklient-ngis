@@ -1,13 +1,14 @@
 import express, { Application } from 'express';
 import { RequestHandler, createProxyMiddleware } from 'http-proxy-middleware';
 import 'dotenv/config';
+import { basicAuthEncode } from './basicAuth';
 
 const app: Application = express();
 
 const NGIS_URL = process.env.NGIS_URL || 'http://ngis-url';
 const NGIS_USERNAME = process.env.NGIS_USERNAME || 'ngis-username';
 const NGIS_PASSWORD = process.env.NGIS_PASSWORD || 'ngis-password';
-const NGIS_TOKEN = Buffer.from(`${NGIS_USERNAME}:${NGIS_PASSWORD}`).toString('base64');
+const NGIS_TOKEN = basicAuthEncode(NGIS_USERNAME, NGIS_PASSWORD);
 
 const PORT = 8001;
 const BASE_HEADERS = {
@@ -20,6 +21,7 @@ const proxy: RequestHandler = createProxyMiddleware({
   headers: BASE_HEADERS,
   changeOrigin: true,
   logLevel: 'debug',
+  secure: false,
 });
 
 app.get('/datasets', (req, res, next) => {
