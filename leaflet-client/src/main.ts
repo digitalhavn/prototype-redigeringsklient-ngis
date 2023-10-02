@@ -15,6 +15,7 @@ const displayFeatureCollection = (featureCollection: FeatureCollection) => {
     },
   }).addTo(map);
 };
+
 const handleCancelButtonClick = () => {
   const editablePage = document.getElementById('markerInfo');
   if (editablePage) {
@@ -22,7 +23,7 @@ const handleCancelButtonClick = () => {
   }
 };
 
-const onMarkerClick = (e: { target: { feature: { properties: any } } }) => {
+const onMarkerClick = (e: { target: { feature: Feature } }) => {
   // Get the div where you want to display the form
   const markerInfoDiv = document.getElementById('markerInfo');
   const featureProperties = e.target.feature.properties;
@@ -77,57 +78,39 @@ const onMarkerClick = (e: { target: { feature: { properties: any } } }) => {
   // Display the div
   markerInfoDiv!.style.display = 'block';
 };
-const getOrCreateLayer = (feature: Feature) => {
+
+const GEO_JSON_STYLE_OPTIONS: Record<string, PathOptions> = {
+  LineString: {
+    color: 'red',
+    weight: 3,
+  },
+  Polygon: {
+    fillColor: 'blue',
+    color: 'black',
+    weight: 2,
+  },
+};
+
+const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
-    if (feature.geometry.type === 'Point') {
-      layers[objectType] = L.geoJson(null, {
-        pointToLayer: function (feature) {
-          // Create a marker for each point feature
-          return L.marker([feature.geometry.coordinates[0], feature.geometry.coordinates[1]]).on(
-            'click',
-            onMarkerClick,
-          );
-        },
-        coordsToLatLng: (coords) => {
-          return L.latLng(coords);
-        },
-      }); // .addTo(map);
-    }
-    if (feature.geometry.type === 'Polygon') {
-      layers[objectType] = L.geoJson(null, {
-        style: function () {
-          // Define styles for polygons
-          return { fillColor: 'blue', color: 'black', weight: 2 };
-        },
-        onEachFeature: function (_feature, layer) {
-          // Add click event handling for polygons
-          layer.on('click', onMarkerClick);
-        },
-        coordsToLatLng: (coords) => {
-          return L.latLng(coords);
-        },
-      });
-    }
-    if (feature.geometry.type === 'LineString') {
-      layers[objectType] = L.geoJson(null, {
-        style: function () {
-          // Define styles for polygons
-          return { color: 'red', weight: 3 };
-        },
-        onEachFeature: function (_feature, layer) {
-          // Add click event handling for polygons
-          layer.on('click', onMarkerClick);
-        },
-        coordsToLatLng: (coords) => {
-          return L.latLng(coords);
-        },
-      });
-    }
+    layers[objectType] = L.geoJson(undefined, {
+      style: () => {
+        return GEO_JSON_STYLE_OPTIONS[feature.geometry.type];
+      },
+      onEachFeature: function (_feature, layer) {
+        // Add click event handling for polygons
+        layer.on('click', onMarkerClick);
+      },
+      coordsToLatLng: (coords) => {
+        return L.latLng(coords);
+      },
+    });
   }
-  return layers[objectType];
+  layers[objectType].addData(feature);
 };
-const layers: Layers = {};
+
+const layers: Record<string, L.GeoJSON> = {};
 
 const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
@@ -143,9 +126,8 @@ const baseMaps = {
 };
 
 const datasets = await getDatasets();
-const featureCollection = await getFeatureCollections(datasets);
-featureCollection.forEach((feature: Feature) => {
-  const layer = getOrCreateLayer(feature);
-  layer.addData(feature);
+const featureCollections = await getFeatureCollections(datasets);
+featureCollections.forEach((featureCollection: FeatureCollection) => {
+  featureCollection.features.forEach(addToOrCreateLayer);
 });
 L.control.layers(baseMaps, layers).addTo(map);

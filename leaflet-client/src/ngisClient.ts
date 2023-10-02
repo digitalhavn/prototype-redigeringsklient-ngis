@@ -15,7 +15,4 @@ export const getFeatureCollections = async (datasets: Dataset[]): Promise<Featur
       return response.data;
     }),
   );
-  const mergedResults = objectsData.flatMap((data) => data.features);
-  console.log(mergedResults);
-  return mergedResults;
 };
