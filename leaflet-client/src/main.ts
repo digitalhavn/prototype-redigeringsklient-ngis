@@ -98,8 +98,7 @@ const addToOrCreateLayer = (feature: Feature) => {
       style: () => {
         return GEO_JSON_STYLE_OPTIONS[feature.geometry.type];
       },
-      onEachFeature: function (_feature, layer) {
-        // Add click event handling for polygons
+      onEachFeature: (_, layer) => {
         layer.on('click', onMarkerClick);
       },
       coordsToLatLng: (coords) => {
