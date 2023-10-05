@@ -1,6 +1,6 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
-import { START_LOCATION, MAP_OPTIONS } from './config.js';
+import { START_LOCATION, MAP_OPTIONS, POLLING_INTERVAL } from './config.js';
 import L from 'leaflet';
 import { FeatureCollection } from 'geojson';
 import { getDatasets, getFeatureCollections } from './ngisClient.js';
@@ -35,8 +35,13 @@ const baseMaps = {
 };
 L.control.layers(baseMaps).addTo(map);
 
-const datasets = await getDatasets();
-const featureCollections = await getFeatureCollections(datasets);
+let datasets = await getDatasets();
+let featureCollections = await getFeatureCollections(datasets);
+setInterval(async () => {
+  datasets = await getDatasets();
+  featureCollections = await getFeatureCollections(datasets);
+  console.log('Nytt kall');
+}, POLLING_INTERVAL);
 featureCollections.forEach(displayFeatureCollection);
 
 // Save button click event handler

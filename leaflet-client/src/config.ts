@@ -5,3 +5,4 @@ export const START_LOCATION: [number, number] = [59.902205, 10.740768300000013];
 export const MAP_OPTIONS: MapOptions = {
   zoom: 15,
 };
+export const POLLING_INTERVAL: number = 30000;
