@@ -39,6 +39,17 @@ app.get('/datasets/:datasetId/features', (req, res, next) => {
   proxy(req, res, next);
 });
 
+app.post('/datasets/:datasetId/features', (req, res, next) => {
+  req.headers['content-type'] = 'application/vnd.kartverket.sosi+json; version=1.0';
+  req.headers['accept'] = 'application/vnd.kartverket.ngis.edit_features_summary+json';
+  proxy(req, res, next);
+});
+
+app.get('/datasets/:datasetId/features/:featureId', (req, res, next) => {
+  req.headers['accept'] = 'application/vnd.kartverket.sosi+json';
+  proxy(req, res, next);
+});
+
 app.get('/datasets/:datasetId/features/:localId/attributes', (req, res, next) => {
   req.headers['accept'] = 'application/vnd.kartverket.ngis.attributes+json; version=1.0';
   proxy(req, res, next);
