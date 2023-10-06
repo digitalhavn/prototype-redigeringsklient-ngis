@@ -1,20 +1,30 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
-import { START_LOCATION, MAP_OPTIONS, POLLING_INTERVAL } from './config.js';
+import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, POLLING_INTERVAL } from './config.js';
 import L from 'leaflet';
-import { FeatureCollection } from 'geojson';
-import { getDatasets, getFeatureCollections } from './ngisClient.js';
+import { Feature, FeatureCollection } from 'geojson';
+import { getDatasets, getFeatureCollections } from './ngisClient';
+import { onMarkerClick } from './featureDetails.js';
 
-const displayFeatureCollection = (featureCollection: FeatureCollection) => {
-  L.geoJSON(featureCollection, {
-    coordsToLatLng: (coords) => {
-      return L.latLng(coords);
-    },
-    onEachFeature(feature, layer) {
-      layer.bindPopup(feature.properties.featuretype);
-    },
-  }).addTo(map);
+const addToOrCreateLayer = (feature: Feature) => {
+  const objectType: string = feature.properties!.featuretype;
+  if (!layers[objectType]) {
+    layers[objectType] = L.geoJson(undefined, {
+      style: () => {
+        return GEO_JSON_STYLE_OPTIONS[feature.geometry.type];
+      },
+      onEachFeature: (_, layer) => {
+        layer.on('click', onMarkerClick);
+      },
+      coordsToLatLng: (coords) => {
+        return L.latLng(coords);
+      },
+    });
+  }
+  layers[objectType].addData(feature);
 };
+
+const layers: Record<string, L.GeoJSON> = {};
 
 const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
@@ -23,54 +33,19 @@ const osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.pn
 const standardMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
 const wmsLayer = L.tileLayer.wms('https://openwms.statkart.no/skwms1/wms.havnedata');
 
-// Creating marker layers with options
-const OsloHavn = L.marker([59.902205, 10.740768300000013], { title: 'Oslo' }).bindPopup('Oslo havn');
-const BergenHavn = L.marker([60.39207, 5.31195], { title: 'Bergen' }).bindPopup('Bergen havn');
-// Adding marker layers to a feature group
-L.layerGroup([OsloHavn, BergenHavn]).addTo(map);
 const baseMaps = {
   'OpenStreetMap.HOT': osmHOT,
   Standard: standardMap,
   WMS: wmsLayer,
 };
-L.control.layers(baseMaps).addTo(map);
 
 let datasets = await getDatasets();
 let featureCollections = await getFeatureCollections(datasets);
 setInterval(async () => {
   datasets = await getDatasets();
   featureCollections = await getFeatureCollections(datasets);
-  console.log('Nytt kall');
 }, POLLING_INTERVAL);
-featureCollections.forEach(displayFeatureCollection);
-
-// Save button click event handler
-document.getElementById('saveButton')?.addEventListener('click', () => {
-  // Assuming 'marker' is declared and initialized somewhere in your code
-
-  // Update the marker's information with edited values
-  const nameInput = document.getElementById('name') as HTMLInputElement | null;
-  const descriptionInput = document.getElementById('description') as HTMLInputElement | null;
-
-  if (nameInput && descriptionInput) {
-    //@ts-ignore
-    marker.name = nameInput.value;
-    //@ts-ignore
-    marker.description = descriptionInput.value;
-  }
-
-  // Hide the editable page and return to view mode
-  const editablePage = document.getElementById('editablePage');
-  if (editablePage) {
-    editablePage.style.display = 'none';
-  }
+featureCollections.forEach((featureCollection: FeatureCollection) => {
+  featureCollection.features.forEach(addToOrCreateLayer);
 });
-
-// Cancel button click event handler
-document.getElementById('cancelButton')?.addEventListener('click', () => {
-  // Hide the editable page and discard any edits
-  const editablePage = document.getElementById('editablePage');
-  if (editablePage) {
-    editablePage.style.display = 'none';
-  }
-});
+L.control.layers(baseMaps, layers).addTo(map);
