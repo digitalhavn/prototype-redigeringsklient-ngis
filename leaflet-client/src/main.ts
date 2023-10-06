@@ -39,13 +39,15 @@ const baseMaps = {
   WMS: wmsLayer,
 };
 
-let datasets = await getDatasets();
-let featureCollections = await getFeatureCollections(datasets);
-setInterval(async () => {
-  datasets = await getDatasets();
-  featureCollections = await getFeatureCollections(datasets);
-}, POLLING_INTERVAL);
-featureCollections.forEach((featureCollection: FeatureCollection) => {
-  featureCollection.features.forEach(addToOrCreateLayer);
-});
+const fetchData = async () => {
+  const datasets = await getDatasets();
+  const featureCollections = await getFeatureCollections(datasets);
+  featureCollections.forEach((featureCollection: FeatureCollection) => {
+    featureCollection.features.forEach(addToOrCreateLayer);
+  });
+  setTimeout(fetchData, POLLING_INTERVAL);
+};
+
+fetchData();
+
 L.control.layers(baseMaps, layers).addTo(map);
