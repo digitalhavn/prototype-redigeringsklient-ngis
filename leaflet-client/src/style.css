@@ -43,14 +43,57 @@ h1 {
   width: 100%;
 }
 #markerInfo {
-  /* Add a higher z-index value to make it appear above the map */
   z-index: 1000;
-  /* Add other styles as needed */
-  position: absolute;
-  background-color: white;
-  padding: 10px;
+  background-color: #fff;
+  padding: 20px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  max-width: 600px; /* Limit the maximum width of the div */
+  margin: 10px; /* Add some margin for spacing */
+}
+#markerInfo label {
+  color: black;
+  font-weight: bold;
+  display: inline-block; /* Labels and input fields on the same line */
+  width: 30%; /* Adjust the width as needed */
+  margin-right: 10px; /* Add spacing between labels and input fields */
+  text-align: right; /* Align labels to the right */
+}
+
+#markerInfo input[type="text"] {
+  width: 65%; /* Adjust the width as needed */
+  padding: 5px;
   border: 1px solid #ccc;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  vertical-align: middle; /* Align input fields vertically with labels */
+}
+
+/* CSS for display fields (e.g., <span>) */
+#markerInfo span {
+  display: inline-block; /* Display spans horizontally */
+  width: 65%; /* Match the width of input fields */
+  vertical-align: middle; /* Align spans vertically with labels */
+  margin-right: 10px; /* Add spacing between spans and labels */
+  color: black;
+}
+
+
+/* CSS for buttons */
+#markerInfo button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+#markerInfo button:hover {
+  background-color: #0056b3;
 }
 .container {
   z-index: 1000;
