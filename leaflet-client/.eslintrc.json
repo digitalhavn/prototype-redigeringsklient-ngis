@@ -1,0 +1,31 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "plugins": ["@typescript-eslint", "prettier"],
+  "rules": {
+    "prettier/prettier": [
+      "warn",
+      {
+        "endOfLine": "auto"
+      }
+    ],
+    "no-unused-vars": "error",
+    "prefer-arrow-callback": "warn",
+    "func-style": ["error", "expression"],
+    "no-var": "error",
+    "prefer-const": "error",
+    "prefer-template": "error",
+    "camelcase": "warn",
+    "eqeqeq": "error",
+    "radix": "error",
+    "prefer-spread": "error",
+    "prefer-destructuring": ["error", { "array": false, "object": true }]
+  }
+}
