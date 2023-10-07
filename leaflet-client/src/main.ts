@@ -2,13 +2,13 @@ import './style.css';
 import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS } from './config.js';
 import L from 'leaflet';
-import { Feature, FeatureCollection } from 'geojson';
-import { getDatasets, getFeatureCollections } from './ngisClient';
+import { Feature } from 'geojson';
+import { getDatasets, getFeaturesForDatasets } from './ngisClient';
 import { onMarkerClick } from './featureDetails.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
-  if (!layers[objectType]) {
+  if (layers[objectType] === undefined) {
     layers[objectType] = L.geoJson(undefined, {
       style: () => {
         return GEO_JSON_STYLE_OPTIONS[feature.geometry.type];
@@ -40,8 +40,11 @@ const baseMaps = {
 };
 
 const datasets = await getDatasets();
-const featureCollections = await getFeatureCollections(datasets);
-featureCollections.forEach((featureCollection: FeatureCollection) => {
-  featureCollection.features.forEach(addToOrCreateLayer);
+const featuresForDatasets = await getFeaturesForDatasets(datasets);
+featuresForDatasets.forEach((datasetFeatures) => {
+  datasetFeatures.featureCollection.features.forEach((feature: Feature) => {
+    (feature as Record<any, any>).datasetId = datasetFeatures.datasetId;
+    addToOrCreateLayer(feature);
+  });
 });
 L.control.layers(baseMaps, layers).addTo(map);

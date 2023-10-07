@@ -1,6 +1,7 @@
 import { Feature, GeoJsonProperties, Geometry, Position } from 'geojson';
 
 export const onMarkerClick = (e: { target: { feature: Feature } }) => {
+  console.log((e.target.feature as Record<any, any>).datasetId);
   const { properties, geometry } = e.target.feature;
   // Get the div where you want to display the form
   const markerInfoDiv = document.getElementById('markerInfo')! as HTMLDivElement;
