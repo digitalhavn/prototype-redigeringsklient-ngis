@@ -34,6 +34,11 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  color: black;
+}
+
+p {
+  color: black;
 }
 
 #map {
@@ -49,8 +54,17 @@ h1 {
   position: absolute;
   background-color: white;
   padding: 10px;
+  margin: 2%;
   border: 1px solid #ccc;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  border-radius: 5%;
+}
+
+#objectList {
+  background-color: white;
+  z-index: 1000;
+  height: 100vh;
+  width: 50vh;
 }
 
 button {
@@ -70,6 +84,54 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+#addObject {
+  background-color: #335cff;
+  position: relative;
+  margin: 10px 20%;
+}
+
+.collapsible {
+  background-color: #eee;
+  color: #444;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: #1a1a1a;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+  margin: 0.5rem 0 0;
+}
+
+.collapsible:after {
+  content: '\02795';
+  font-size: 13px;
+  color: black;
+  float: right;
+  margin-left: 5px;
+}
+
+.active:after {
+  content: '\2796';
+}
+
+.active,
+.collapsible:hover {
+  background-color: #ccc;
+}
+
+.collapsibleContent {
+  padding: 0 18px;
+  background-color: #f1f1f1;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.2s ease-out;
+}
+
+.c-checkbox-label {
+  color: black;
 }
 
 @media (prefers-color-scheme: light) {
