@@ -1,19 +1,20 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS } from './config.js';
-import L from 'leaflet';
+import L, { Layer } from 'leaflet';
 import { Feature } from 'geojson';
 import { getDatasets, getFeaturesForDatasets } from './ngisClient';
 import { onMarkerClick } from './featureDetails.js';
 
-const addToOrCreateLayer = (feature: Feature) => {
+export const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
   if (layers[objectType] === undefined) {
     layers[objectType] = L.geoJson(undefined, {
       style: () => {
         return GEO_JSON_STYLE_OPTIONS[feature.geometry.type];
       },
-      onEachFeature: (_, layer) => {
+      onEachFeature: (feature, layer) => {
+        featuresMap[feature.properties.identifikasjon.lokalId] = layer;
         layer.on('click', onMarkerClick);
       },
       coordsToLatLng: (coords) => {
@@ -24,7 +25,18 @@ const addToOrCreateLayer = (feature: Feature) => {
   layers[objectType].addData(feature);
 };
 
-const layers: Record<string, L.GeoJSON> = {};
+export const updateLayer = (updatedFeature: Feature) => {
+  deleteLayer(updatedFeature);
+  addToOrCreateLayer(updatedFeature);
+};
+
+export const deleteLayer = (updatedFeature: Feature) => {
+  const deletedLayer = featuresMap[updatedFeature.properties!.identifikasjon.lokalId];
+  layers[updatedFeature.properties!.featuretype].removeLayer(deletedLayer);
+};
+
+export const layers: Record<string, L.GeoJSON> = {};
+const featuresMap: Record<string, Layer> = {};
 
 const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
@@ -43,7 +55,7 @@ const datasets = await getDatasets();
 const featuresForDatasets = await getFeaturesForDatasets(datasets);
 featuresForDatasets.forEach((datasetFeatures) => {
   datasetFeatures.featureCollection.features.forEach((feature: Feature) => {
-    (feature as Record<any, any>).datasetId = datasetFeatures.datasetId;
+    feature.properties!.datasetId = datasetFeatures.datasetId;
     addToOrCreateLayer(feature);
   });
 });

@@ -15,7 +15,7 @@ export const getFeaturesForDatasets = async (
   return await Promise.all(
     datasets.map(async (dataset) => {
       const response = await axios.get(
-        `${NGIS_PROXY_URL}/datasets/${dataset.id}/features?crs_EPSG=4258&references=all&limit=100`,
+        `${NGIS_PROXY_URL}/datasets/${dataset.id}/features?crs_EPSG=4258&references=all`,
       );
       return { featureCollection: response.data, datasetId: dataset.id };
     }),
@@ -30,10 +30,10 @@ export const getAndLockFeature = async (datasetId: string, localId: string): Pro
 };
 
 export const updateFeature = async (
-  datasetId: string,
   feature: Feature,
   action: 'Create' | 'Replace' | 'Erase',
 ): Promise<EditFeaturesSummary> => {
+  const { datasetId, ...properties } = feature.properties as any;
   const payload = {
     type: 'FeatureCollection',
     crs: {
@@ -42,12 +42,13 @@ export const updateFeature = async (
         name: 'EPSG:4258',
       },
     },
-    features: [{ ...feature, update: { action } }],
+    features: [{ type: 'Feature', geometry: feature.geometry, properties, update: { action } }],
   };
 
   const response = await axios.post(
     `${NGIS_PROXY_URL}/datasets/${datasetId}/features?crs_EPSG=4258&locking_type=user_lock`,
-    JSON.stringify(payload),
+    payload,
+    { headers: { 'Content-Type': 'application/json' } },
   );
   return response.data;
 };

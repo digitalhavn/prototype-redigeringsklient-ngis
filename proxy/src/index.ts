@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import { RequestHandler, createProxyMiddleware } from 'http-proxy-middleware';
 import 'dotenv/config';
 import { basicAuthEncode } from './basicAuth';
+import cors from 'cors';
 
 const app: Application = express();
 
@@ -23,6 +24,8 @@ const proxy: RequestHandler = createProxyMiddleware({
   logLevel: 'debug',
   secure: false,
 });
+
+app.use(cors());
 
 app.get('/datasets', (req, res, next) => {
   req.headers['accept'] = 'application/vnd.kartverket.ngis.datasets+json';
