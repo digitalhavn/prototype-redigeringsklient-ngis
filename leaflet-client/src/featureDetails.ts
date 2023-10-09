@@ -1,6 +1,6 @@
 import { Feature, GeoJsonProperties, Geometry, LineString, Point, Polygon, Position } from 'geojson';
 import { getAndLockFeature, updateFeature } from './ngisClient';
-import { updateLayer } from './main';
+import { deleteLayer, updateLayer } from './main';
 
 export const onMarkerClick = (e: { target: { feature: Feature<Point | LineString | Polygon, GeoJsonProperties> } }) => {
   const { feature } = e.target;
@@ -33,22 +33,29 @@ export const onMarkerClick = (e: { target: { feature: Feature<Point | LineString
 
   // Create "Save" button
   const saveButton = document.createElement('button');
-  saveButton.textContent = 'Save';
+  saveButton.textContent = 'Lagre';
   saveButton.type = 'submit';
   saveButton.id = 'save';
 
   // Create "Cancel" button
   const cancelButton = document.createElement('button');
-  cancelButton.textContent = 'Cancel';
+  cancelButton.textContent = 'Avbryt';
   cancelButton.type = 'button';
   cancelButton.id = 'cancel';
+
+  const deleteButton = document.createElement('button');
+  deleteButton.textContent = 'Slett objekt';
+  deleteButton.type = 'button';
+  deleteButton.id = 'delete';
+  deleteButton.style.color = 'red';
 
   // Add event listeners to the buttons (you can define the event handlers)
   saveButton.addEventListener('click', (e) => handleSaveButtonClick(e, feature));
   cancelButton.addEventListener('click', handleCancelButtonClick);
+  deleteButton.addEventListener('click', () => handleDeleteButtonClick(feature));
 
   // Append the buttons to the div
-  markerInfoDiv.append(document.createElement('hr'), saveButton, cancelButton);
+  markerInfoDiv.append(document.createElement('hr'), saveButton, cancelButton, deleteButton);
 
   // Display the div
   markerInfoDiv.style.display = 'block';
@@ -89,6 +96,7 @@ const handleSaveButtonClick = async (
 
     if (saveResponse.features_replaced > 0) {
       updateLayer(feature);
+      console.info('Feature updated');
     }
   } else {
     console.log('Edit attributes only');
@@ -99,6 +107,27 @@ const handleCancelButtonClick = () => {
   const editablePage = document.getElementById('markerInfo');
   if (editablePage) {
     editablePage.style.display = 'none';
+  }
+};
+
+const handleDeleteButtonClick = async (feature: Feature) => {
+  const markerInfoDiv = document.querySelector('#markerInfo')! as HTMLDivElement;
+
+  const featureCollection = await getAndLockFeature(
+    feature.properties!.datasetId,
+    feature.properties!.identifikasjon.lokalId,
+  );
+  console.log(featureCollection);
+
+  const saveResponse = await updateFeature(feature, 'Erase');
+  console.log(saveResponse);
+
+  if (saveResponse.features_erased > 0) {
+    deleteLayer(feature);
+    markerInfoDiv.style.display = 'none';
+    console.info('Feature was deleted');
+  } else {
+    console.error('Feature was not deleted');
   }
 };
 
