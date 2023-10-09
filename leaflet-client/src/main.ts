@@ -2,8 +2,8 @@ import './style.css';
 import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, WMS_PROXY_URL } from './config.js';
 import L from 'leaflet';
-import { Feature, FeatureCollection } from 'geojson';
-import { getDatasets, getFeatureCollections, getSchema } from './ngisClient';
+import { Feature } from 'geojson';
+import { getDatasets, getFeaturesForDatasets, getSchema } from './ngisClient';
 import { onMarkerClick } from './featureDetails.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
@@ -48,9 +48,13 @@ const wmsLayer = L.tileLayer.wms(`${WMS_PROXY_URL}`, {
 
 const datasets = await getDatasets();
 export const schemas = await getSchema(datasets);
-const featureCollections = await getFeatureCollections(datasets);
-featureCollections.forEach((featureCollection: FeatureCollection) => {
-  featureCollection.features.forEach(addToOrCreateLayer);
+const featuresForDatasets = await getFeaturesForDatasets(datasets);
+console.log(featuresForDatasets);
+featuresForDatasets.forEach((datasetFeatures) => {
+  datasetFeatures.featureCollection.features.forEach((feature: Feature) => {
+    feature.properties!.datasetId = datasetFeatures.datasetId;
+    addToOrCreateLayer(feature);
+  });
 });
 const loading = document.getElementById('loading-container')!;
 loading.style.display = 'none';

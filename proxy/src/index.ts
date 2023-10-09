@@ -1,6 +1,7 @@
 import express, { Application } from 'express';
 import { RequestHandler, createProxyMiddleware } from 'http-proxy-middleware';
 import 'dotenv/config';
+import cors from 'cors';
 
 const app: Application = express();
 const wmsApp: Application = express();
@@ -30,6 +31,8 @@ const proxy: RequestHandler = createProxyMiddleware({
   changeOrigin: true,
   logLevel: 'debug',
 });
+app.use(cors());
+
 wmsApp.get('', (req, res, next) => {
   wmsProxy(req, res, next);
 });

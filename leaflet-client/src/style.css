@@ -95,6 +95,7 @@ h1 {
 #markerInfo button:hover {
   background-color: #0056b3;
 }
+
 .container {
   z-index: 1000;
   width: 100vw; /* Use viewport width to fill the entire screen */

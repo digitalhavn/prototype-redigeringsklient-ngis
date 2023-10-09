@@ -1,5 +1,6 @@
 import { Feature } from 'geojson';
 import { schemas } from './main';
+import { updateFeatureProperties } from './ngisClient';
 import Ajv from 'ajv';
 
 export const findSchemaByTitle = (title: string) => {
@@ -14,7 +15,9 @@ export const findSchemaByTitle = (title: string) => {
 
   return null;
 };
-const handleSaveButtonClick = (feature: Feature, form: HTMLFormElement) => {
+const handleSaveButtonClick = async (feature: Feature, form: HTMLFormElement, responseField: HTMLDivElement) => {
+  const uuid = feature.properties!.datasetId;
+  delete feature.properties!.datasetId;
   const relevantSchema = findSchemaByTitle(feature.properties!.featuretype);
   delete relevantSchema.properties.properties.properties.datafangstdato;
   delete relevantSchema.properties.properties.properties.oppdateringsdato;
@@ -38,10 +41,25 @@ const handleSaveButtonClick = (feature: Feature, form: HTMLFormElement) => {
   const validate = ajv.compile(relevantSchema);
   if (validate(feature)) {
     console.log('Data is valid');
+    const response = await updateFeatureProperties(feature, uuid);
+    feature.properties!.datasetId = uuid;
+    console.log(response);
+    handleCancelButtonClick();
   } else {
+    (feature as Feature).properties!.datasetId = uuid;
     console.log('Validation errors: ', validate.errors);
+    const errorMessages = validate
+      .errors!.map((error) => {
+        if (error.keyword === 'const') {
+          return `${error.keyword} must be equal to ${error.params.allowedValue}`;
+        } else {
+          return `${error.message}`;
+        }
+      })
+      .join(', ');
+    responseField.style.color = 'red'; // Set text color to red
+    responseField.textContent = `Validation errors: ${errorMessages}`;
   }
-  handleCancelButtonClick();
 };
 
 const handleCancelButtonClick = () => {
@@ -61,6 +79,7 @@ export const onMarkerClick = (e: { target: { feature: Feature } }) => {
 
   // Create a form element
   const form = document.createElement('form');
+  const responseField = document.createElement('div'); // Create a response field
 
   // Iterate through feature properties
   for (const prop in featureProperties) {
@@ -73,6 +92,7 @@ export const onMarkerClick = (e: { target: { feature: Feature } }) => {
         'identifikasjon',
         'ISPSHavneanlegg',
         'avgrensesAvHavneanleggGrense',
+        'datasetId',
       ].includes(prop)
     ) {
       // Create a label for the property
@@ -121,7 +141,7 @@ export const onMarkerClick = (e: { target: { feature: Feature } }) => {
   // Add event listener to the "Save" button
   saveButton.addEventListener('click', () => {
     // Handle saving the edited data (pass the form as an argument)
-    handleSaveButtonClick(e.target.feature, form);
+    handleSaveButtonClick(e.target.feature, form, responseField);
   });
 
   // Add event listener to the "Cancel" button
@@ -131,6 +151,7 @@ export const onMarkerClick = (e: { target: { feature: Feature } }) => {
   markerInfoDiv!.appendChild(form);
   markerInfoDiv!.appendChild(saveButton);
   markerInfoDiv!.appendChild(cancelButton);
+  markerInfoDiv!.appendChild(responseField); // Append the response field
 
   // Display the div
   markerInfoDiv!.style.display = 'block';
