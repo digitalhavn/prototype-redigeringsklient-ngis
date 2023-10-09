@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import { RequestHandler, createProxyMiddleware } from 'http-proxy-middleware';
 import 'dotenv/config';
 import { basicAuthEncode } from './basicAuth';
+import cors from 'cors';
 
 const app: Application = express();
 
@@ -24,6 +25,8 @@ const proxy: RequestHandler = createProxyMiddleware({
   secure: false,
 });
 
+app.use(cors());
+
 app.get('/datasets', (req, res, next) => {
   req.headers['accept'] = 'application/vnd.kartverket.ngis.datasets+json';
   proxy(req, res, next);
@@ -35,6 +38,17 @@ app.get('/datasets/:datasetId', (req, res, next) => {
 });
 
 app.get('/datasets/:datasetId/features', (req, res, next) => {
+  req.headers['accept'] = 'application/vnd.kartverket.sosi+json';
+  proxy(req, res, next);
+});
+
+app.post('/datasets/:datasetId/features', (req, res, next) => {
+  req.headers['content-type'] = 'application/vnd.kartverket.sosi+json; version=1.0';
+  req.headers['accept'] = 'application/vnd.kartverket.ngis.edit_features_summary+json';
+  proxy(req, res, next);
+});
+
+app.get('/datasets/:datasetId/features/:featureId', (req, res, next) => {
   req.headers['accept'] = 'application/vnd.kartverket.sosi+json';
   proxy(req, res, next);
 });
