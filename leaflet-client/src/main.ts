@@ -5,7 +5,43 @@ import L from 'leaflet';
 import { Feature } from 'geojson';
 import { getDatasets, getFeaturesForDatasets, getSchema } from './ngisClient';
 import { onMarkerClick } from './featureDetails.js';
-
+const findPath = (feature: Feature) => {
+  const featuretype = feature.properties!.featuretype;
+  let path = '';
+  let moveable = '';
+  if (['Drivstofftilkobling', 'Kran'].includes(featuretype)) {
+    if (feature.properties!.mobil) {
+      moveable = 'mobil';
+    } else {
+      moveable = 'fast';
+    }
+    path = `${featuretype}/${featuretype} - ${moveable}/${featuretype}_${moveable}.png`;
+  } else if (featuretype === 'Beredskapspunkt') {
+    if (
+      ['brannslange', 'samlingsplass', 'brannhydrant', 'førstehjelp', 'branslukningsapparat'].includes(
+        feature.properties!.beredskapstype[0],
+      )
+    ) {
+      path = 'Beredskapspunkt - Annen/Beredskapspunkt - Annen/beredskapspunkt---annen.png';
+    } else {
+      path = `${featuretype} - ${feature.properties!.beredskapstype}/${featuretype} - ${
+        feature.properties!.beredskapstype
+      }/${featuretype}---${feature.properties!.beredskapstype}.png`;
+    }
+  } else if (featuretype === 'Havnesensor') {
+    path = `${featuretype}/${featuretype} ${feature.properties!.sensortype}/${featuretype}_${
+      feature.properties!.sensortype
+    }.png`;
+  } else if (featuretype === 'VAUttak') {
+    path = `Vanntilkobling/Vanntilkobling ${feature.properties!.VAuttakstype}/Vanntilkobling_${
+      feature.properties!.VAuttakstype
+    }.png`;
+  } else {
+    path = `${featuretype}/${featuretype}/${featuretype}.png`;
+  }
+  const modifiedpath = path.replace(/ø/g, 'o');
+  return modifiedpath;
+};
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
@@ -15,6 +51,15 @@ const addToOrCreateLayer = (feature: Feature) => {
       },
       onEachFeature: (_, layer) => {
         layer.on('click', onMarkerClick);
+      },
+      pointToLayer: (feature) => {
+        const path = findPath(feature);
+        const customIcon = L.icon({
+          iconUrl: `./havnesymboler/${path}`,
+          iconSize: [15, 15],
+        });
+        const [lng, lat] = feature.geometry.coordinates;
+        return L.marker([lng, lat], { icon: customIcon });
       },
       coordsToLatLng: (coords) => {
         return L.latLng(coords);

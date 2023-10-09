@@ -96,6 +96,7 @@ const handleCancelButtonClick = () => {
 
 export const onMarkerClick = (e: { target: { feature: Feature } }) => {
   // Get the div where you want to display the form
+  console.log(e.target.feature);
   const markerInfoDiv = document.getElementById('markerInfo');
   const featureProperties = e.target.feature.properties;
   const relevantSchema = findSchemaByTitle(featureProperties!.featuretype);
