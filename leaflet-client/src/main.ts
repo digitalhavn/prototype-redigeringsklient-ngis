@@ -1,6 +1,6 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
-import { START_LOCATION, MAP_OPTIONS, MIN_ZOOM_LEVEL } from './config.js';
+import { START_LOCATION, MAP_OPTIONS } from './config.js';
 import L from 'leaflet';
 import { FeatureCollection } from 'geojson';
 import { getDatasets, getFeatureCollections } from './ngisClient.js';
@@ -17,7 +17,6 @@ const displayFeatureCollection = (featureCollection: FeatureCollection) => {
 };
 
 const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
-map.setMinZoom(MIN_ZOOM_LEVEL); // Setting the minimum zoom level of the map
 
 // Adding base maps
 const osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
