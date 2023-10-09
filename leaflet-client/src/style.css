@@ -67,6 +67,13 @@ h1 {
   border-radius: 4px;
   vertical-align: middle; /* Align input fields vertically with labels */
 }
+#markerInfo select {
+  width: 65%; /* Adjust the width as needed */
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  vertical-align: middle; /* Align input fields vertically with labels */
+}
 
 /* CSS for display fields (e.g., <span>) */
 #markerInfo span {

@@ -73,7 +73,7 @@ export const onMarkerClick = (e: { target: { feature: Feature } }) => {
   // Get the div where you want to display the form
   const markerInfoDiv = document.getElementById('markerInfo');
   const featureProperties = e.target.feature.properties;
-
+  const relevantSchema = findSchemaByTitle(featureProperties!.featuretype);
   // Clear any existing content in the div
   markerInfoDiv!.innerHTML = '';
 
@@ -98,7 +98,6 @@ export const onMarkerClick = (e: { target: { feature: Feature } }) => {
       // Create a label for the property
       const label = document.createElement('label');
       label.textContent = `${prop}:`;
-
       if (
         ['ISPS', 'energikilde', 'mobil', 'datafangstdato', 'oppdateringsdato', 'kaiId', 'objektLøpenummer'].includes(
           prop,
@@ -113,15 +112,36 @@ export const onMarkerClick = (e: { target: { feature: Feature } }) => {
         form.appendChild(label);
         form.appendChild(displayField);
       } else {
-        // Create an input field for other properties
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.name = prop;
-        input.value = featureProperties[prop];
+        if (relevantSchema && relevantSchema.properties.properties.properties[prop].oneOf) {
+          // Create a dropdown list (select element) for the property
+          const select = document.createElement('select');
+          select.name = prop;
 
-        // Append label and input to the form
-        form.appendChild(label);
-        form.appendChild(input);
+          // Add an option for each allowed value
+          for (const allowedValue of relevantSchema.properties.properties.properties[prop].oneOf) {
+            const option = document.createElement('option');
+            option.value = allowedValue.const;
+            option.textContent = allowedValue.const;
+            select.appendChild(option);
+          }
+
+          // Set the selected value based on the feature's current value
+          select.value = featureProperties[prop].toString();
+
+          // Append the label and select element to the form
+          form.appendChild(label);
+          form.appendChild(select);
+        } else {
+          // Create an input field for other properties
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.name = prop;
+          input.value = featureProperties[prop];
+
+          // Append label and input to the form
+          form.appendChild(label);
+          form.appendChild(input);
+        }
       }
     }
   }
