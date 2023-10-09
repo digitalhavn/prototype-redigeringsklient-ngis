@@ -73,8 +73,9 @@ const handleSaveButtonClick = async (
     console.log('Validation errors: ', validate.errors);
     const errorMessages = validate
       .errors!.map((error) => {
+        console.log(error);
         if (error.keyword === 'const') {
-          return `${error.keyword} must be equal to ${error.params.allowedValue}`;
+          return `${error.dataPath.split('.')[2]} must be equal to ${error.params.allowedValue}`;
         } else {
           return `${error.message}`;
         }
