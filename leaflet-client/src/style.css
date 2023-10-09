@@ -135,10 +135,10 @@ button:focus-visible {
   display: block;
   position: relative;
   padding-left: 35px;
-  margin-bottom: 12px;
   cursor: pointer;
   user-select: none;
   font-size: small;
+  margin: 5px;
 }
 
 .c-checkbox-label input {
@@ -151,19 +151,22 @@ button:focus-visible {
 
 .c-checkmark-span {
   position: absolute;
-  top: 0;
-  left: 0;
-  height: 10px;
-  width: 10px;
-  background-color: #ffffff;
+  top: 0px;
+  left: 0px;
+  height: 15px;
+  width: 15px;
+  background-color: white;
+  border: 1.5px solid black;
+  border-radius: 2px;
 }
 
 .c-checkbox-label:hover input ~ .c-checkmark-span {
   background-color: #cccc;
+  border-color: #335cff;
 }
 
 .c-checkbox-label input:checked ~ .c-checkmark-span {
-  background-color: #2196f3;
+  background-color: #ffffff;
 }
 
 .c-checkmark-span:after {
@@ -172,16 +175,16 @@ button:focus-visible {
   display: none;
 }
 
-.container input:checked ~ .c-checkmark-span:after {
+.c-checkbox-label input:checked ~ .c-checkmark-span:after {
   display: block;
 }
 
 .c-checkbox-label .c-checkmark-span:after {
-  left: 9px;
-  top: 5px;
-  width: 5px;
+  left: 4px;
+  top: 0px;
+  width: 4px;
   height: 10px;
-  border: solid white;
+  border: solid black;
   border-width: 0 3px 3px 0;
   -webkit-transform: rotate(45deg);
   -ms-transform: rotate(45deg);

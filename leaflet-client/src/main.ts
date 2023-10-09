@@ -5,6 +5,7 @@ import L, { Layer } from 'leaflet';
 import { Feature } from 'geojson';
 import { getDatasets, getFeaturesForDatasets } from './ngisClient';
 import { onMarkerClick } from './featureDetails.js';
+import { listObjects } from './objects.js';
 
 export const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -53,10 +54,14 @@ const baseMaps = {
 
 const datasets = await getDatasets();
 const featuresForDatasets = await getFeaturesForDatasets(datasets);
+const featureTypes: string[] = [];
 featuresForDatasets.forEach((datasetFeatures) => {
   datasetFeatures.featureCollection.features.forEach((feature: Feature) => {
     feature.properties!.datasetId = datasetFeatures.datasetId;
+    featureTypes.push(feature.properties!.featuretype);
     addToOrCreateLayer(feature);
   });
 });
 L.control.layers(baseMaps, layers).addTo(map);
+
+listObjects(featureTypes);
