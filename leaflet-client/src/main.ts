@@ -3,7 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS } from './config.js';
 import L from 'leaflet';
 import { Feature, FeatureCollection } from 'geojson';
-import { getDatasets, getFeatureCollections } from './ngisClient.js';
+import { getDatasets, getFeatureCollections } from './ngisClient';
 import { onMarkerClick } from './featureDetails';
 
 const addToOrCreateLayer = (feature: Feature) => {
