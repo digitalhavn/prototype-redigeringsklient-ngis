@@ -2,6 +2,7 @@ import { Feature } from 'geojson';
 import { schemas } from './main';
 import { updateFeatureProperties } from './ngisClient';
 import Ajv from 'ajv';
+import cloneDeep from 'lodash/cloneDeep';
 
 const showUpdateMessage = () => {
   const updateMessage = document.getElementById('updateMessage');
@@ -31,9 +32,16 @@ export const findSchemaByTitle = (title: string) => {
 
   return null;
 };
-const handleSaveButtonClick = async (feature: Feature, form: HTMLFormElement, responseField: HTMLDivElement) => {
+const handleSaveButtonClick = async (
+  e: { target: { feature: Feature } },
+  form: HTMLFormElement,
+  responseField: HTMLDivElement,
+) => {
+  const feature = e.target.feature;
   const uuid = feature.properties!.datasetId;
+  const featureCopy = cloneDeep(feature);
   delete feature.properties!.datasetId;
+
   const relevantSchema = findSchemaByTitle(feature.properties!.featuretype);
   delete relevantSchema.properties.properties.properties.datafangstdato;
   delete relevantSchema.properties.properties.properties.oppdateringsdato;
@@ -52,15 +60,14 @@ const handleSaveButtonClick = async (feature: Feature, form: HTMLFormElement, re
     }
   }
 
-  console.log(feature);
   const ajv = new Ajv();
   const validate = ajv.compile(relevantSchema);
   if (validate(feature)) {
+    handleCancelButtonClick();
     console.log('Data is valid');
     await updateFeatureProperties(feature, uuid);
     feature.properties!.datasetId = uuid;
     showUpdateMessage();
-    handleCancelButtonClick();
   } else {
     (feature as Feature).properties!.datasetId = uuid;
     console.log('Validation errors: ', validate.errors);
@@ -75,6 +82,7 @@ const handleSaveButtonClick = async (feature: Feature, form: HTMLFormElement, re
       .join(', ');
     responseField.style.color = 'red'; // Set text color to red
     responseField.textContent = `Validation errors: ${errorMessages}`;
+    e.target.feature = featureCopy;
   }
 };
 
@@ -177,7 +185,7 @@ export const onMarkerClick = (e: { target: { feature: Feature } }) => {
   // Add event listener to the "Save" button
   saveButton.addEventListener('click', () => {
     // Handle saving the edited data (pass the form as an argument)
-    handleSaveButtonClick(e.target.feature, form, responseField);
+    handleSaveButtonClick(e, form, responseField);
   });
 
   // Add event listener to the "Cancel" button
