@@ -30,12 +30,15 @@ export const updateLayer = (updatedFeature: Feature) => {
   addToOrCreateLayer(updatedFeature);
 };
 
-export const deleteLayer = (updatedFeature: Feature) => {
-  const deletedLayer = featuresMap[updatedFeature.properties!.identifikasjon.lokalId];
-  layers[updatedFeature.properties!.featuretype].removeLayer(deletedLayer);
+export const deleteLayer = (deletedFeature: Feature) => {
+  const deletedLayer = featuresMap[deletedFeature.properties!.identifikasjon.lokalId];
+  layers[deletedFeature.properties!.featuretype].removeLayer(deletedLayer);
 };
 
-export const layers: Record<string, L.GeoJSON> = {};
+const layers: Record<string, L.GeoJSON> = {};
+
+// Maps feature local ID to leaflet layer in order to
+// update and delete already created layers
 const featuresMap: Record<string, Layer> = {};
 
 const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object

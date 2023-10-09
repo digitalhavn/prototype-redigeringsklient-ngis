@@ -11,7 +11,25 @@ export const onMarkerClick = (e: { target: { feature: Feature<Point | LineString
   markerInfoDiv.innerHTML = '';
 
   renderProperties(properties, markerInfoDiv);
-  ['Point', 'LineString'].includes(geometry.type) && renderGeometry(geometry, markerInfoDiv);
+
+  if (geometry.type !== 'Polygon') {
+    const geometryDiv = renderGeometry(geometry);
+
+    const editGeometriesBtn = document.createElement('input');
+    editGeometriesBtn.type = 'checkbox';
+    editGeometriesBtn.id = 'isEditGeometryActive';
+    editGeometriesBtn.checked = false;
+
+    const editGeometriesLabel = document.createElement('label');
+    editGeometriesLabel.textContent = 'Rediger koordinater';
+    editGeometriesLabel.htmlFor = 'isEditGeometryActive';
+
+    editGeometriesBtn.addEventListener('change', () => {
+      geometryDiv.style.display = editGeometriesBtn.checked ? 'block' : 'none';
+    });
+
+    markerInfoDiv.append(editGeometriesBtn, editGeometriesLabel, document.createElement('br'), geometryDiv);
+  }
 
   // Create "Save" button
   const saveButton = document.createElement('button');
@@ -30,8 +48,7 @@ export const onMarkerClick = (e: { target: { feature: Feature<Point | LineString
   cancelButton.addEventListener('click', handleCancelButtonClick);
 
   // Append the buttons to the div
-  markerInfoDiv.appendChild(saveButton);
-  markerInfoDiv.appendChild(cancelButton);
+  markerInfoDiv.append(document.createElement('hr'), saveButton, cancelButton);
 
   // Display the div
   markerInfoDiv.style.display = 'block';
@@ -43,35 +60,38 @@ const handleSaveButtonClick = async (
 ) => {
   e.preventDefault();
 
-  const geometry: Position[] = [];
-  const table = document.querySelector('#geometryTable')! as HTMLTableElement;
+  const geometryEditBtn = document.querySelector('#isEditGeometryActive') as HTMLInputElement;
 
-  for (let i = 1, row; (row = table.rows[i]); i++) {
-    geometry[i - 1] = [];
-    for (let j = 0, col; (col = row.cells[j]); j++) {
-      geometry[i - 1][j] = !col.textContent ? 0 : +col.textContent;
+  if (geometryEditBtn.checked) {
+    const geometry: Position[] = [];
+    const table = document.querySelector('#geometryTable')! as HTMLTableElement;
+
+    for (let i = 1, row; (row = table.rows[i]); i++) {
+      geometry[i - 1] = [];
+      for (let j = 0, col; (col = row.cells[j]); j++) {
+        geometry[i - 1][j] = !col.textContent ? 0 : +col.textContent;
+      }
     }
-  }
 
-  let editedGeometry: Position | Position[];
+    let editedGeometry: Position | Position[];
 
-  geometry.length === 1 ? (editedGeometry = geometry[0]) : (editedGeometry = geometry);
+    feature.geometry.type === 'Point' ? (editedGeometry = geometry[0]) : (editedGeometry = geometry);
 
-  // Sjekk om geometri har endret seg. Ikke helt optimal løsning
-  if (JSON.stringify(editedGeometry) !== JSON.stringify(feature.geometry.coordinates)) {
     const featureCollection = await getAndLockFeature(
       feature.properties!.datasetId,
       feature.properties!.identifikasjon.lokalId,
     );
     console.log(featureCollection);
+
     feature.geometry.coordinates = editedGeometry;
     const saveResponse = await updateFeature(feature, 'Replace');
     console.log(saveResponse);
+
     if (saveResponse.features_replaced > 0) {
       updateLayer(feature);
     }
   } else {
-    console.log('Ingen endringer til geometri, bruk attributes endepunkt');
+    console.log('Edit attributes only');
   }
 };
 
@@ -83,10 +103,12 @@ const handleCancelButtonClick = () => {
 };
 
 // Only renders coordinates of points and linestrings
-const renderGeometry = (geometry: Geometry, markerInfoDiv: HTMLDivElement) => {
+const renderGeometry = (geometry: Geometry) => {
+  const geometryDiv = document.createElement('div');
+  geometryDiv.style.display = 'none';
   const coordsHeader = document.createElement('h3');
   coordsHeader.textContent = 'Koordinater';
-  markerInfoDiv.append(coordsHeader);
+  geometryDiv.append(coordsHeader);
 
   const table = document.createElement('table');
   table.id = 'geometryTable';
@@ -101,20 +123,20 @@ const renderGeometry = (geometry: Geometry, markerInfoDiv: HTMLDivElement) => {
 
   tableHeader.append(longHeader, latHeader, altHeader);
   table.append(tableHeader);
-  markerInfoDiv.append(table);
+  geometryDiv.append(table);
 
   const addPosition = ([long, lat, alt]: Position) => {
     const tableRow = document.createElement('tr');
 
     const longData = document.createElement('td');
     longData.contentEditable = 'true';
-    longData.textContent = long.toString();
+    longData.textContent = long.toFixed(6).toString();
     const latData = document.createElement('td');
     latData.contentEditable = 'true';
-    latData.textContent = lat.toString();
+    latData.textContent = lat.toFixed(6).toString();
     const altData = document.createElement('td');
     altData.contentEditable = 'true';
-    altData.textContent = alt.toString();
+    altData.textContent = alt.toFixed(6).toString();
 
     tableRow.append(longData, latData, altData);
     table.append(tableRow);
@@ -143,9 +165,10 @@ const renderGeometry = (geometry: Geometry, markerInfoDiv: HTMLDivElement) => {
       removePositionBtn.id = 'removePositionBtn';
       removePositionBtn.addEventListener('click', () => removePosition(table.rows.length - 1));
 
-      markerInfoDiv.append(addPositionBtn, removePositionBtn);
-      markerInfoDiv.append(document.createElement('hr'));
+      geometryDiv.append(addPositionBtn, removePositionBtn);
   }
+
+  return geometryDiv;
 };
 
 const renderProperties = (properties: GeoJsonProperties, markerInfoDiv: HTMLDivElement) => {
