@@ -3,6 +3,22 @@ import { schemas } from './main';
 import { updateFeatureProperties } from './ngisClient';
 import Ajv from 'ajv';
 
+const showUpdateMessage = () => {
+  const updateMessage = document.getElementById('updateMessage');
+  if (updateMessage) {
+    updateMessage.style.display = 'block'; // Show the div
+
+    // Add the 'show' class to trigger the animation
+    updateMessage.classList.add('show');
+
+    setTimeout(() => {
+      // Remove the 'show' class to prevent animation when hiding
+      updateMessage.classList.remove('show');
+      updateMessage.style.display = 'none'; // Hide the div after 2 seconds
+    }, 2000); // 2000 milliseconds (2 seconds)
+  }
+};
+
 export const findSchemaByTitle = (title: string) => {
   const schema = schemas.find((schema: any) =>
     schema.properties.features.items.anyOf.find((item: any) => item.title === title),
@@ -41,9 +57,9 @@ const handleSaveButtonClick = async (feature: Feature, form: HTMLFormElement, re
   const validate = ajv.compile(relevantSchema);
   if (validate(feature)) {
     console.log('Data is valid');
-    const response = await updateFeatureProperties(feature, uuid);
+    await updateFeatureProperties(feature, uuid);
     feature.properties!.datasetId = uuid;
-    console.log(response);
+    showUpdateMessage();
     handleCancelButtonClick();
   } else {
     (feature as Feature).properties!.datasetId = uuid;

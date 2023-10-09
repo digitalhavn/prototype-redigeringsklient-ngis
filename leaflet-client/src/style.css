@@ -102,6 +102,31 @@ h1 {
 #markerInfo button:hover {
   background-color: #0056b3;
 }
+.update-message {
+  z-index: 1000;
+  display: block;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #4CAF50;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  opacity: 0;
+}
+.update-message.show {
+  animation: fadeOut 2s ease-in-out forwards;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    display: none;
+  }
+}
 
 .container {
   z-index: 1000;
