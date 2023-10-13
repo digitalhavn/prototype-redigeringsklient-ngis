@@ -85,9 +85,8 @@ const wmsLayer = L.tileLayer.wms(`${WMS_PROXY_URL}`, {
   layers: 'havnedata',
   CRS: 'EPSG:4326',
   bbox: '57.021168,0.228508,71.516049,37.230461',
-  width: 400,
-  height: 300,
-  updateWhenIdle: true,
+  tileSize: 1024,
+  updateWhenIdle: false,
   transparent: true,
 });
 
