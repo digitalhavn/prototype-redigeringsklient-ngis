@@ -21,7 +21,7 @@ const addToOrCreateLayer = (feature: Feature) => {
       pointToLayer: (feature) => {
         const path = findPath(feature);
         const customIcon = L.icon({
-          iconUrl: `./havnesymboler/${path}`,
+          iconUrl: `/havnesymboler/${path}`,
           iconSize: [15, 15],
         });
         const [lng, lat] = feature.geometry.coordinates;
