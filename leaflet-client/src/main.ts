@@ -44,17 +44,27 @@ const featuresMap: Record<string, Layer> = {};
 const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
 // Adding base maps
-const osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
-const standardMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-const wmsLayer = L.tileLayer.wms('https://openwms.statkart.no/skwms1/wms.havnedata');
+const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+  maxZoom: 21,
+  subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+});
 
+const statKart = L.tileLayer(
+  `https://opencache{s}.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=norgeskart_bakgrunn&zoom={z}&x={x}&y={y}`,
+  {
+    maxZoom: 20,
+    detectRetina: true,
+    attribution: '<a href="https://www.kartverket.no/">Kartverket</a>',
+    subdomains: ['', '2', '3'],
+  },
+).addTo(map);
 const baseMaps = {
-  'OpenStreetMap.HOT': osmHOT,
-  Standard: standardMap,
-  WMS: wmsLayer,
+  GoogleSat: googleSat,
+  StatKart: statKart,
 };
 
 const datasets = await getDatasets();
+console.log(datasets);
 const featuresForDatasets = await getFeaturesForDatasets(datasets);
 featuresForDatasets.forEach((datasetFeatures) => {
   datasetFeatures.featureCollection.features.forEach((feature: Feature) => {
