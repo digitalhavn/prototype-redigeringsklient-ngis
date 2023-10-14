@@ -2,40 +2,56 @@ import { Feature } from 'geojson';
 
 export const findPath = (feature: Feature) => {
   const { featuretype } = feature.properties!;
-  let path = '';
-  let moveable = '';
-  if (['Drivstofftilkobling', 'Kran'].includes(featuretype)) {
-    if (feature.properties!.mobil) {
-      moveable = 'mobil';
-    } else {
-      moveable = 'fast';
-    }
-    path = `${featuretype}/${featuretype} - ${moveable}/${featuretype}_${moveable}.png`;
-  } else if (featuretype === 'Beredskapspunkt') {
-    if (
-      ['brannslange', 'samlingsplass', 'brannhydrant', 'førstehjelp', 'branslukningsapparat'].includes(
-        feature.properties!.beredskapstype[0],
-      )
-    ) {
-      path = 'Beredskapspunkt - Annen/Beredskapspunkt - Annen/beredskapspunkt---annen.png';
-    } else {
-      path = `${featuretype} - ${feature.properties!.beredskapstype}/${featuretype} - ${
-        feature.properties!.beredskapstype
-      }/${featuretype}---${feature.properties!.beredskapstype}.png`;
-    }
-  } else if (featuretype === 'Havnesensor') {
-    path = `${featuretype}/${featuretype} ${feature.properties!.sensortype}/${featuretype}_${
-      feature.properties!.sensortype
-    }.png`;
-  } else if (featuretype === 'VAUttak') {
-    path = `Vanntilkobling/Vanntilkobling ${feature.properties!.VAuttakstype}/Vanntilkobling_${
-      feature.properties!.VAuttakstype
-    }.png`;
-  } else {
-    path = `${featuretype}/${featuretype}/${featuretype}.png`;
+  const basePath = `${featuretype}/${featuretype}`;
+
+  switch (featuretype) {
+    case 'Beredskapspunkt':
+      const beredskapstype = feature.properties!.beredskapstype[0];
+      if (
+        [
+          'båtshake',
+          'brannslange',
+          'branslukningsapparat',
+          'nødplakatinfopunkt',
+          'oljelenser',
+          'redningsbøye',
+          'stige',
+        ].includes(beredskapstype)
+      ) {
+        return `${basePath}_${beredskapstype}.png`;
+      }
+      return `${basePath}_annen.png`;
+    case 'Havnesensor':
+      const { sensortype } = feature.properties!;
+      if (['kamera', 'strøm', 'temperatur', 'værstasjon', 'vannstand', 'vind'].includes(sensortype)) {
+        return `${basePath}_${sensortype}.png`;
+      }
+      return `${basePath}_annen.png`;
+    case 'VAUttak':
+      const { VAuttakstype } = feature.properties!;
+      if (['ferskvann', 'gråvann', 'svartvann'].includes(VAuttakstype)) {
+        return `${basePath}_${VAuttakstype}.png`;
+      }
+      return `${basePath}_annen.png`;
+    case 'ElKobling':
+      const { ElAnleggstype } = feature.properties!;
+      if (['ladeanlegg', 'landstrøm', 'strømskap'].includes(ElAnleggstype)) {
+        return `${basePath}_${ElAnleggstype}.png`;
+      }
+      return `${basePath}_annen.png`;
+    case 'Drivstofftilkobling':
+    case 'Kran':
+      return `${basePath}_${feature.properties!.mobil ? 'mobil' : 'fast'}.png`;
+    case 'Fortøyningsinnretning':
+      return `${basePath}_${feature.properties!.fortøyningstype === 'bøye' ? 'bøye' : 'annen'}.png`;
+    case 'Fender':
+      return `${basePath}_${feature.properties!.fendertype === 'flytefender' ? 'flytende' : 'annen'}.png`;
+    case 'Toalett':
+    case 'Avfallspunkt':
+      return `${basePath}.png`;
+    default:
+      return 'Annet.png';
   }
-  const modifiedpath = path.replace(/ø/g, 'o');
-  return modifiedpath;
 };
 
 export const setLoading = (isLoading: boolean) => {
