@@ -62,7 +62,19 @@ const baseMaps = {
   GoogleSat: googleSat,
   StatKart: statKart,
 };
-
+map.on('zoomend', () => {
+  const currentZoom = map.getZoom();
+  console.log(currentZoom);
+  if (currentZoom < 19) {
+    // Switch to OpenStreetMap at lower zoom levels
+    map.addLayer(statKart);
+    map.removeLayer(googleSat);
+  } else if (currentZoom >= 19) {
+    // Switch to other Google layers at zoom levels 18 and higher
+    map.addLayer(googleSat);
+    map.removeLayer(statKart);
+  }
+});
 const datasets = await getDatasets();
 console.log(datasets);
 const featuresForDatasets = await getFeaturesForDatasets(datasets);
