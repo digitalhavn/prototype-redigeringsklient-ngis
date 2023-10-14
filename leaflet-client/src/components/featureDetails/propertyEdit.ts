@@ -141,6 +141,7 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
     editGeometriesBtn.type = 'button';
     editGeometriesBtn.id = 'renderGeometryButton';
     editGeometriesBtn.textContent = 'Edit geometry';
+    editGeometriesBtn.className = 'link';
 
     editGeometriesBtn.addEventListener('click', () => renderGeometry(feature, contentDiv));
 
@@ -152,12 +153,14 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
   saveButton.textContent = 'Save';
   saveButton.type = 'button';
   saveButton.id = 'save';
+  saveButton.className = 'default-button';
 
   const deleteButton = document.createElement('button');
   deleteButton.textContent = 'Delete';
   deleteButton.type = 'button';
   deleteButton.id = 'delete';
-  deleteButton.style.color = 'red';
+  deleteButton.className = 'default-button';
+  deleteButton.style.background = 'red';
 
   // Add event listener to the "Save" button
   saveButton.addEventListener('click', () => {

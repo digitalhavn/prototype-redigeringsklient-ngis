@@ -66,34 +66,39 @@ export const renderGeometry = (feature: NGISFeature, contentDiv: HTMLDivElement)
     case 'LineString':
       geometry.coordinates.forEach((coordinate) => addPosition(coordinate, table));
 
+      const plusMinusDiv = document.createElement('div');
+      plusMinusDiv.className = 'plus-minus';
+
       const addPositionBtn = document.createElement('button');
-      addPositionBtn.textContent = '+ Legg til posisjon';
+      addPositionBtn.textContent = '+';
+      addPositionBtn.className = 'plus';
       addPositionBtn.type = 'button';
-      addPositionBtn.id = 'addPositionBtn';
       addPositionBtn.addEventListener('click', () => addPosition([0, 0, 0], table));
 
       const removePositionBtn = document.createElement('button');
-      removePositionBtn.textContent = '- Fjern posisjon';
+      removePositionBtn.textContent = '-';
+      removePositionBtn.className = 'minus';
       removePositionBtn.type = 'button';
-      removePositionBtn.id = 'removePositionBtn';
       removePositionBtn.addEventListener('click', () => removePosition(table.rows.length - 1, table));
 
-      contentDiv.append(addPositionBtn, removePositionBtn);
+      plusMinusDiv.append(removePositionBtn, addPositionBtn);
+      contentDiv.append(plusMinusDiv);
   }
 
   const editBtn = document.createElement('button');
   editBtn.type = 'button';
   editBtn.id = 'editGeoBtn';
   editBtn.textContent = 'Save';
+  editBtn.className = 'default-button';
   editBtn.addEventListener('click', (e) => handleGeometryEdit(e, feature));
 
   const backBtn = document.createElement('button');
   backBtn.type = 'button';
-  backBtn.id = 'backToProps';
+  backBtn.className = 'link';
   backBtn.textContent = 'Back';
   backBtn.addEventListener('click', () => renderProperties(feature, contentDiv));
 
-  contentDiv.append(editBtn, backBtn);
+  contentDiv.append(backBtn, editBtn);
 };
 
 const addPosition = ([long, lat, alt]: Position, table: HTMLTableElement) => {
