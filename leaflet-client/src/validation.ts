@@ -1,6 +1,6 @@
-import Ajv, { JSONSchemaType } from 'ajv';
+import Ajv, { JSONSchemaType } from 'ajv/dist/2020';
 import { schemas } from './main';
-import { Feature } from 'geojson';
+import { AnyValidateFunction } from 'ajv/dist/core';
 
 export const ajv = new Ajv();
 ajv.addFormat('date-time', {
@@ -37,21 +37,22 @@ export const findSchemaByTitle = (title: string): JSONSchemaType<any> | null => 
  * @param feature
  * @returns validate function or null if no schema is found for the feature
  */
-export const getValidation = (feature: Feature) => {
-  const { featuretype } = feature.properties!;
-
-  const validate = ajv.getSchema(featuretype);
+export const getFeatureSchema = (
+  featureType: string,
+): { validate: AnyValidateFunction<unknown> | undefined | null; schema: JSONSchemaType<any> | null } => {
+  const validate = ajv.getSchema(featureType);
 
   if (validate) {
-    return validate;
+    return { validate, schema: validate.schema as JSONSchemaType<any> };
   }
 
-  const relevantSchema = findSchemaByTitle(feature.properties!.featuretype);
+  const relevantSchema = findSchemaByTitle(featureType);
 
   if (!relevantSchema) {
-    return null;
+    return { validate: null, schema: null };
   }
 
-  ajv.addSchema(relevantSchema, featuretype);
-  return ajv.getSchema(featuretype);
+  ajv.compile(relevantSchema);
+  ajv.addSchema(relevantSchema, featureType);
+  return { validate: ajv.getSchema(featureType), schema: relevantSchema };
 };

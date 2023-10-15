@@ -6,6 +6,7 @@ import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/index.js';
 import { findPath, setLoading } from './util.js';
 import { getDatasets, getFeaturesForDatasets, getSchema } from './ngisClient.js';
+import { createFeatureForm } from './components/createFeature/index.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -86,3 +87,5 @@ setLoading(false);
 
 wmsLayer.addTo(map);
 L.control.layers(undefined, layers).addTo(map);
+
+createFeatureForm('ElKobling');
