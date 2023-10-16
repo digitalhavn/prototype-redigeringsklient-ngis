@@ -6,7 +6,7 @@ import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/index.js';
 import { findPath, setLoading } from './util.js';
 import { getDatasets, getFeaturesForDatasets, getSchema } from './ngisClient.js';
-import { createFeatureForm } from './components/createFeature/index.js';
+import { handleOpenCreateFeatureModal } from './components/createFeature/index.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -88,4 +88,20 @@ setLoading(false);
 wmsLayer.addTo(map);
 L.control.layers(undefined, layers).addTo(map);
 
-createFeatureForm('ElKobling');
+const modal = document.querySelector('[data-modal]') as HTMLDialogElement;
+
+modal.showModal();
+
+modal.addEventListener('click', (e) => {
+  const dialogBounds = modal.getBoundingClientRect();
+  if (
+    e.clientX < dialogBounds.left ||
+    e.clientX > dialogBounds.right ||
+    e.clientY < dialogBounds.top ||
+    e.clientY > dialogBounds.bottom
+  ) {
+    modal.close();
+  }
+});
+
+handleOpenCreateFeatureModal();

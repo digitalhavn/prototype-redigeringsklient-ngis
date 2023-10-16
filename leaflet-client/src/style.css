@@ -227,7 +227,7 @@ tr:nth-child(even) {
   background-color: #dddddd;
 }
 
-#cancel {
+.cancel {
   position: absolute;
   background: gray;
   color: white;
@@ -235,7 +235,7 @@ tr:nth-child(even) {
   right: 10px;
 }
 
-#cancel:hover {
+.cancel:hover {
   cursor: pointer;
 }
 
@@ -265,4 +265,23 @@ tr:nth-child(even) {
   border: 1px solid #ddd;
   text-align: center;
   margin: 5px;
+}
+
+dialog {
+  border-radius: 0.25rem;
+  z-index: 1001;
+  overflow: auto;
+  background: white;
+  width: 800px;
+  padding: 0;
+  border: none;
+}
+
+dialog::backdrop {
+  background-color: hsl(200, 100%, 50%, 0.5);
+}
+
+#create-feature-form {
+  position: relative;
+  padding: 1rem;
 }

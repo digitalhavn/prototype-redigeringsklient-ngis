@@ -1,8 +1,14 @@
 import { getFeatureSchema } from '../../validation';
 import { JSONSchema4 } from 'json-schema';
 
-export const createFeatureForm = (featureType: string) => {
-  const form = document.createElement('form');
+export const handleOpenCreateFeatureModal = () => {
+  const featureTypeInput = document.querySelector('[name="feature-type"]') as HTMLInputElement;
+  featureTypeInput.onchange = () => renderPropertyInputs(featureTypeInput.value);
+};
+
+const renderPropertyInputs = (featureType: string) => {
+  const inputs = document.querySelector('#choose-feature-properties') as HTMLDivElement;
+  inputs.innerHTML = '';
 
   const { schema } = getFeatureSchema(featureType);
 
@@ -12,7 +18,7 @@ export const createFeatureForm = (featureType: string) => {
     .filter(([propertyName]) => !['identifikasjon', 'featuretype', 'oppdateringsdato'].includes(propertyName))
     .forEach(([propertyName, property]) => getPropertyInput(propertyName, property, required as string[]));
 
-  return form;
+  return inputs;
 };
 
 const getPropertyInput = (propertyName: string, property: JSONSchema4, required: string[] | undefined) => {

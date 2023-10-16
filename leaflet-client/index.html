@@ -21,6 +21,16 @@
 
   <div id="markerInfo" style="display: none"></div>
 
+  <dialog data-modal class="modal">
+    <form id="create-feature-form">
+      <h3>Create feature</h3>
+      <button class="cancel" data-close-modal type="submit" formmethod="dialog">X</button>
+      <label for="feature-type">Feature type</label>
+      <input id="feature-type" name="feature-type" type="text">
+      <div id="choose-feature-properties"></div>
+    </form>
+  </dialog>
+
   <div id="map"></div>
 
   <script type="module" src="/src/main.ts"></script>
