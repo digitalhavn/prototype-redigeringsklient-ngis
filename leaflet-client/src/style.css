@@ -15,15 +15,24 @@
 }
 
 header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
+  width: 100vw;
   z-index: 1002;
   height: 3.5rem;
   border-bottom: 1px solid black;
   display: flex;
   flex-direction: row;
+  align-items: center;
+}
+
+header p {
+  font-size: large;
+  font-weight: 500;
+  margin: 0 1rem;
+}
+
+header select {
+  border-radius: 8px;
+  padding: 0.2rem;
 }
 
 h3 {
@@ -42,8 +51,8 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  place-items: center;
-  min-width: 320px;
+  flex-flow: column;
+  width: 100vh;
   height: 100vh;
 }
 
@@ -64,7 +73,7 @@ h1 {
   z-index: 1000;
   background-color: #fff;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
-  height: 100vh;
+  flex: 1 1 auto;
   padding: 0 20px;
   width: 30rem; /* Limit the maximum width of the div */
   opacity: 0.9;
@@ -115,7 +124,7 @@ h1 {
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
-  margin-top: 10px;
+  margin: 10px 0;
 }
 
 #markerInfo .default-button:hover {

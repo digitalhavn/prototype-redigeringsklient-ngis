@@ -76,6 +76,11 @@ L.tileLayer
 
 const controlLayers = L.control.layers();
 
+export const flyToActive = () => {
+  const { ur, ll } = State.activeDataset?.bbox!;
+  map.flyToBounds([ur, ll], { duration: 1 });
+};
+
 setLoading(true);
 const datasets = await getDatasets();
 State.setDatasets(datasets);
@@ -89,11 +94,7 @@ export const fetchData = async () => {
     layers[key].clearLayers();
   });
 
-  const dataset = await getDataset();
-  const { ur, ll } = dataset.bbox!;
-  map.flyToBounds([ur, ll], { duration: 1, animate: true }).setZoom(15);
-
-  State.setActiveDataset(dataset);
+  State.setActiveDataset(await getDataset());
   State.setSchema(await getSchema());
 
   const datasetFeatures = await getDatasetFeatures();
