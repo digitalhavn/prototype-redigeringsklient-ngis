@@ -6,7 +6,7 @@ import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/index.js';
 import { findPath, setLoading } from './util.js';
 import { getDatasets, getFeaturesForDatasets, getSchema } from './ngisClient.js';
-import { listObjects } from './objects.js';
+import { listObjects } from './generateLayerControl.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
