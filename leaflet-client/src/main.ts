@@ -1,15 +1,16 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS } from './config.js';
-import L, { Layer } from 'leaflet';
+import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
-import { getDatasets, getFeaturesForDatasets } from './ngisClient';
-import { onMarkerClick } from './featureDetails.js';
+import { onMarkerClick } from './components/featureDetails/index.js';
+import { findPath, setLoading } from './util.js';
+import { getDatasets, getFeaturesForDatasets, getSchema } from './ngisClient.js';
 import { listObjects } from './objects.js';
 
-export const addToOrCreateLayer = (feature: Feature) => {
+const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
-  if (layers[objectType] === undefined) {
+  if (!layers[objectType]) {
     layers[objectType] = L.geoJson(undefined, {
       style: () => {
         return GEO_JSON_STYLE_OPTIONS[feature.geometry.type];
@@ -17,6 +18,15 @@ export const addToOrCreateLayer = (feature: Feature) => {
       onEachFeature: (feature, layer) => {
         featuresMap[feature.properties.identifikasjon.lokalId] = layer;
         layer.on('click', onMarkerClick);
+      },
+      pointToLayer: (feature) => {
+        const path = findPath(feature);
+        const customIcon = L.icon({
+          iconUrl: `/havnesymboler/${path}`,
+          iconSize: [15, 15],
+        });
+        const [lng, lat] = feature.geometry.coordinates;
+        return L.marker([lng, lat], { icon: customIcon });
       },
       coordsToLatLng: (coords) => {
         return L.latLng(coords);
@@ -31,9 +41,9 @@ export const updateLayer = (updatedFeature: Feature) => {
   addToOrCreateLayer(updatedFeature);
 };
 
-export const deleteLayer = (updatedFeature: Feature) => {
-  const deletedLayer = featuresMap[updatedFeature.properties!.identifikasjon.lokalId];
-  layers[updatedFeature.properties!.featuretype].removeLayer(deletedLayer);
+export const deleteLayer = (deletedFeature: Feature) => {
+  const deletedLayer = featuresMap[deletedFeature.properties!.identifikasjon.lokalId];
+  layers[deletedFeature.properties!.featuretype].removeLayer(deletedLayer);
 };
 
 export const toggleLayer = (checkbox: HTMLInputElement) => {
@@ -44,23 +54,35 @@ export const toggleLayer = (checkbox: HTMLInputElement) => {
   }
 };
 
-export const layers: Record<string, L.GeoJSON> = {};
+const layers: Record<string, L.GeoJSON> = {};
+
+// Maps feature local ID to leaflet layer in order to
+// update and delete already created layers
 const featuresMap: Record<string, Layer> = {};
 
 const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
 // Adding base maps
-const osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
-const standardMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-const wmsLayer = L.tileLayer.wms('https://openwms.statkart.no/skwms1/wms.havnedata');
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
 
-const baseMaps = {
-  'OpenStreetMap.HOT': osmHOT,
-  Standard: standardMap,
-  WMS: wmsLayer,
-};
+const wmsLayer = L.tileLayer
+  .wms('https://openwms.statkart.no/skwms1/wms.havnedata', {
+    service: 'WMS',
+    version: '1.3.0',
+    request: 'GetMap',
+    format: 'image/png',
+    layers: 'havnedata',
+    CRS: 'EPSG:4326',
+    bbox: '57.021168,0.228508,71.516049,37.230461',
+    tileSize: 1024,
+    updateWhenIdle: false,
+    transparent: true,
+    crossOrigin: true,
+  } as WMSOptions)
+  .addTo(map);
 
 const datasets = await getDatasets();
+export const schemas = await getSchema(datasets);
 const featuresForDatasets = await getFeaturesForDatasets(datasets);
 const featureTypes: [string, string][] = [];
 featuresForDatasets.forEach((datasetFeatures) => {
@@ -70,6 +92,9 @@ featuresForDatasets.forEach((datasetFeatures) => {
     addToOrCreateLayer(feature);
   });
 });
-L.control.layers(baseMaps).addTo(map);
+setLoading(false);
+
+wmsLayer.addTo(map);
+L.control.layers(undefined).addTo(map);
 
 listObjects(featureTypes);
