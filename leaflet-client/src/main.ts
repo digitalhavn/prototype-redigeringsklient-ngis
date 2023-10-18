@@ -95,6 +95,5 @@ featuresForDatasets.forEach((datasetFeatures) => {
 setLoading(false);
 
 wmsLayer.addTo(map);
-L.control.layers(undefined).addTo(map);
 
 listObjects(featureTypes);
