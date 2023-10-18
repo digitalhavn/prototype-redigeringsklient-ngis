@@ -45,7 +45,9 @@ p {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 100%;
+  width: 75%;
+  height: 100%;
+  margin-left: 25%;
 }
 #markerInfo {
   /* Add a higher z-index value to make it appear above the map */
@@ -60,11 +62,34 @@ p {
   border-radius: 5%;
 }
 
-#objectList {
+#i-object-list {
   background-color: white;
   z-index: 1000;
   height: 100vh;
-  width: 50vh;
+  width: 23.5%;
+  padding: 0 10px;
+  overflow: auto;
+  position: relative;
+}
+
+#i-add-object-button {
+  border: none;
+}
+
+#i-add-object-button:hover {
+  background-color: #0033ff;
+}
+
+#i-reset-map-button {
+  background-color: white;
+  border: 2px solid #335cff;
+  color: #335cff;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+#i-reset-map-button:hover {
+  background-color: #ececec;
 }
 
 button {
@@ -86,10 +111,12 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-#addObject {
+.c-side-button {
   background-color: #335cff;
   position: relative;
-  margin: 10px 20%;
+  margin: 10px 15%;
+  font-size: medium;
+  width: 70%;
 }
 
 .collapsible {
@@ -122,10 +149,10 @@ button:focus-visible {
   background-color: #ccc;
 }
 
-.collapsibleContent {
+.c-collapsible-content {
   padding: 0 18px;
   background-color: #f1f1f1;
-  overflow: hidden;
+  overflow: auto;
   max-height: 0;
   transition: max-height 0.2s ease-out;
 }
@@ -218,4 +245,25 @@ th {
 
 tr:nth-child(even) {
   background-color: #dddddd;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }

@@ -36,6 +36,14 @@ export const deleteLayer = (updatedFeature: Feature) => {
   layers[updatedFeature.properties!.featuretype].removeLayer(deletedLayer);
 };
 
+export const toggleLayer = (checkbox: HTMLInputElement) => {
+  if (checkbox.checked) {
+    map.addLayer(layers[checkbox.value]);
+  } else {
+    map.removeLayer(layers[checkbox.value]);
+  }
+};
+
 export const layers: Record<string, L.GeoJSON> = {};
 const featuresMap: Record<string, Layer> = {};
 
@@ -54,14 +62,14 @@ const baseMaps = {
 
 const datasets = await getDatasets();
 const featuresForDatasets = await getFeaturesForDatasets(datasets);
-const featureTypes: string[] = [];
+const featureTypes: [string, string][] = [];
 featuresForDatasets.forEach((datasetFeatures) => {
   datasetFeatures.featureCollection.features.forEach((feature: Feature) => {
     feature.properties!.datasetId = datasetFeatures.datasetId;
-    featureTypes.push(feature.properties!.featuretype);
+    featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
     addToOrCreateLayer(feature);
   });
 });
-L.control.layers(baseMaps, layers).addTo(map);
+L.control.layers(baseMaps).addTo(map);
 
 listObjects(featureTypes);
