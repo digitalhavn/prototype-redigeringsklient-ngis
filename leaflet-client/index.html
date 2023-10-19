@@ -1,16 +1,34 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Leaflet Kartklient</title>
-  </head>
-  <body>
-    <div id="markerInfo" style="display: none">
-      
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaflet Kartklient</title>
+</head>
+
+<body>
+  <header>
+    <p>Havnedata klient</p>
+    <select name="select-dataset" id="select-dataset" style="display: none;"></select>
+  </header>
+
+  <div id="markerInfo" style="display: none"></div>
+
+  <div id="map"></div>
+
+  <div class="container" id="loading-container" style="display: none">
+    <div id="loader">
+      <img src="/wheel.svg"></img>
     </div>
-    <div id="map"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+  </div>
+
+  <div id="updateMessage" class="update-message">
+    <span class="checkmark">&#10004;</span> Update Successful
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>
