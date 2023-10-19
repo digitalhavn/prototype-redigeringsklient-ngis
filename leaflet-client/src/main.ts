@@ -1,11 +1,13 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
-import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS } from './config.js';
+import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
 import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/index.js';
 import { findPath, setLoading } from './util.js';
-import { getDatasets, getFeaturesForDatasets, getSchema } from './ngisClient.js';
+import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
+import { State } from './state.js';
+import { renderDatasetOptions } from './components/header.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -56,7 +58,7 @@ const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 // Adding base maps
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
 
-const wmsLayer = L.tileLayer
+L.tileLayer
   .wms('https://openwms.statkart.no/skwms1/wms.havnedata', {
     service: 'WMS',
     version: '1.3.0',
@@ -72,17 +74,38 @@ const wmsLayer = L.tileLayer
   } as WMSOptions)
   .addTo(map);
 
+const controlLayers = L.control.layers();
+
+export const flyToActive = () => {
+  const { ur, ll } = State.activeDataset?.bbox!;
+  map.flyToBounds([ur, ll], { duration: 1 });
+};
+
+setLoading(true);
 const datasets = await getDatasets();
-export const schemas = await getSchema(datasets);
-const featuresForDatasets = await getFeaturesForDatasets(datasets);
+State.setDatasets(datasets);
+State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
 
-featuresForDatasets.forEach((datasetFeatures) => {
-  datasetFeatures.featureCollection.features.forEach((feature: Feature) => {
-    feature.properties!.datasetId = datasetFeatures.datasetId;
-    addToOrCreateLayer(feature);
+export const fetchData = async () => {
+  setLoading(true);
+
+  Object.keys(layers).forEach((key) => {
+    controlLayers.removeLayer(layers[key]);
+    layers[key].clearLayers();
   });
-});
-setLoading(false);
 
-wmsLayer.addTo(map);
-L.control.layers(undefined, layers).addTo(map);
+  State.setActiveDataset(await getDataset());
+  State.setSchema(await getSchema());
+
+  const datasetFeatures = await getDatasetFeatures();
+  datasetFeatures.features.forEach(addToOrCreateLayer);
+
+  Object.entries(layers).forEach(([key, value]) => {
+    controlLayers.addOverlay(value, key).addTo(map);
+  });
+
+  setLoading(false);
+};
+
+await fetchData();
+renderDatasetOptions();

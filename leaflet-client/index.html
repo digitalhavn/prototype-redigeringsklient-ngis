@@ -9,7 +9,16 @@
 </head>
 
 <body>
-  <div class="container" id="loading-container">
+  <header>
+    <p>Havnedata klient</p>
+    <select name="select-dataset" id="select-dataset" style="display: none;"></select>
+  </header>
+
+  <div id="markerInfo" style="display: none"></div>
+
+  <div id="map"></div>
+
+  <div class="container" id="loading-container" style="display: none">
     <div id="loader">
       <img src="/wheel.svg"></img>
     </div>
@@ -18,10 +27,6 @@
   <div id="updateMessage" class="update-message">
     <span class="checkmark">&#10004;</span> Update Successful
   </div>
-
-  <div id="markerInfo" style="display: none"></div>
-
-  <div id="map"></div>
 
   <script type="module" src="/src/main.ts"></script>
 </body>
