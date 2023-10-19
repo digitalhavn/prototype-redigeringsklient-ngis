@@ -9,6 +9,16 @@
 </head>
 
 <body>
+  <div class="searchcontainer">
+    <form id="searchForm">
+      <div class="inputContainer">
+          <input type="text" id="searchInput" placeholder="Search..." list="" name="searchResults">
+          <button type="submit" id="searchButton">Search</button>
+      </div>
+      <datalist id="searchResults"></datalist>
+  </form>
+</div>
+
   <div class="container" id="loading-container">
     <div id="loader">
       <img src="/wheel.svg"></img>

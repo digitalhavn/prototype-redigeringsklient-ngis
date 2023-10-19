@@ -28,11 +28,12 @@ a:hover {
 }
 
 body {
-  margin: 0;
   display: flex;
-  place-items: center;
-  min-width: 320px;
-  height: 100vh;
+  justify-content: center; /* Horizontally center the content */
+  align-items: top; /* Align content to the top */
+  height: 100vh; /* 100% of the viewport height */
+  margin: 0; /* Remove default body margin */
+  background-color: #f0f0f0; /* Optional background color */
 }
 
 h1 {
@@ -41,6 +42,7 @@ h1 {
 }
 
 #map {
+  z-index: 1;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -110,10 +112,10 @@ h1 {
 }
 .update-message {
   z-index: 1000;
-  display: block;
+  display: none;
   position: fixed;
   top: 20px;
-  right: 20px;
+  right: 55px;
   background-color: #4caf50;
   color: #fff;
   padding: 10px 20px;
@@ -178,6 +180,87 @@ h1 {
 #loader img {
   animation: spin 2s ease-in-out infinite; /* Adjust the duration and timing function as needed */
 }
+/* Style the input field */
+/* Style the container div */
+
+.searchcontainer {
+  z-index: 1001;
+  position: relative;
+  margin-top: 20px;
+  width: 200px;
+  height: 50px;
+}
+
+#searchForm {
+  height: 20px;
+}
+
+.inputContainer {
+  display: flex;
+  align-items: center;
+}
+
+#searchInput {
+  font-size: 18px;
+  padding: 5px;
+  height: 20px;
+  width: 200px;
+  border: 1px solid blue;
+  outline: none;
+  border-radius: 5px;
+  color: blue;
+  background-color: white;
+  border-bottom: none; 
+}
+#searchButton {
+  background-color: #0074D9; /* Adjust to your desired button style */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 2px; /* Adjust for spacing between input and button */
+  height: 30px;
+}
+#searchButton:hover {
+  background-color: #0056b3; /* Adjust the hover color as desired */
+}
+#searchResults {
+  background-color: white;
+  border: 1px solid blue;
+  border-radius: 0 0 5px 5px;
+  border-top: none;
+  font-family: sans-serif;
+  width: 200px;
+  max-height: 10rem;
+  overflow-y: auto
+  
+}
+/* Hide the default browser datalist */
+[list]::-webkit-datalist-placeholder {
+  display: none !important;
+}
+[list]::-webkit-datalist-value {
+  display: none !important;
+}
+[list]::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+
+#searchOption {
+  background-color: white;
+  padding: 4px;
+  color: blue;
+  margin-bottom: 1px;
+   font-size: 18px;
+  cursor: pointer;
+}
+
+#searchOption:hover,  .active{
+  background-color: lightblue;
+}
+
+
 
 .default-button {
   border-radius: 8px;

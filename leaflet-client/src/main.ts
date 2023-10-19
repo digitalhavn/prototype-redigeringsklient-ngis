@@ -6,6 +6,7 @@ import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/index.js';
 import { findPath, setLoading } from './util.js';
 import { getDatasets, getFeaturesForDatasets, getSchema } from './ngisClient.js';
+import { performSearch } from './components/search/search.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -86,3 +87,44 @@ setLoading(false);
 
 wmsLayer.addTo(map);
 L.control.layers(undefined, layers).addTo(map);
+const input = document.getElementById('searchInput') as HTMLInputElement;
+const datalist = document.getElementById('searchResults') as HTMLSelectElement;
+
+input.addEventListener('input', async () => {
+  datalist.style.display = 'block';
+  const query = input.value;
+  const results = await performSearch(query);
+  // Clear the previous results
+  datalist.innerHTML = '';
+
+  if (results.length > 0) {
+    // Create and append options to the datalist
+    results.forEach((result: any) => {
+      const option = document.createElement('option');
+      option.value = result.label;
+      option.text = result.label;
+      option.id = 'searchOption';
+      option.style.display = 'block';
+      option.addEventListener('click', () => {
+        input.value = result.label;
+      });
+      datalist.appendChild(option);
+    });
+    // Show the datalist
+    input.setAttribute('list', 'searchResults');
+  } else {
+    // Hide the datalist if no results
+    input.removeAttribute('list');
+  }
+});
+
+// Handle form submission (optional)
+const form = document.getElementById('searchForm');
+form!.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const query = input!.value;
+  const results = await performSearch(query);
+  //@ts-ignore
+  map.flyToBounds([results[0].bounds]);
+  datalist.style.display = 'none';
+});
