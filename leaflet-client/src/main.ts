@@ -4,8 +4,9 @@ import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS } from './config.js
 import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/index.js';
-import { findPath, setLoading } from './util.js';
+import { findPath, setLoading, enableDraggingForLayer, disableDraggingForLayer } from './util.js';
 import { getDatasets, getFeaturesForDatasets, getSchema } from './ngisClient.js';
+import 'leaflet-draw';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -25,7 +26,17 @@ const addToOrCreateLayer = (feature: Feature) => {
           iconSize: [15, 15],
         });
         const [lng, lat] = feature.geometry.coordinates;
-        return L.marker([lng, lat], { icon: customIcon });
+        const marker = L.marker([lng, lat], { icon: customIcon, draggable: false });
+
+        marker.on('dragend', (event) => {
+          const updatedLatLng = event.target.getLatLng();
+          event.target.feature.geometry.coordinates = [
+            updatedLatLng.lat,
+            updatedLatLng.lng,
+            event.target.feature.geometry.coordinates[2],
+          ];
+        });
+        return marker;
       },
       coordsToLatLng: (coords) => {
         return L.latLng(coords);
@@ -86,3 +97,9 @@ setLoading(false);
 
 wmsLayer.addTo(map);
 L.control.layers(undefined, layers).addTo(map);
+const enableDragButton = document.getElementById('enableDragButton'); // Replace with your button's ID
+enableDragButton!.addEventListener('click', () => enableDraggingForLayer(layers));
+
+// Disable dragging for a specific layer when another button is clicked
+const disableDragButton = document.getElementById('disableDragButton'); // Replace with your button's ID
+disableDragButton!.addEventListener('click', () => disableDraggingForLayer(layers));

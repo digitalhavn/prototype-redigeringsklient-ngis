@@ -1,4 +1,5 @@
 import { Feature } from 'geojson';
+import L from 'leaflet';
 
 export const findPath = (feature: Feature) => {
   const { featuretype } = feature.properties!;
@@ -57,4 +58,36 @@ export const findPath = (feature: Feature) => {
 export const setLoading = (isLoading: boolean) => {
   const loader = document.getElementById('loading-container')!;
   loader.style.display = isLoading ? 'block' : 'none';
+};
+
+export const enableDraggingForLayer = (layers: any) => {
+  const layerNames = Object.keys(layers);
+  layerNames.forEach((layerName: any) => {
+    const layer = layers[layerName];
+    if (layer instanceof L.LayerGroup || layer instanceof L.FeatureGroup) {
+      layer.eachLayer((marker) => {
+        //@ts-ignore
+        if (marker instanceof L.Marker && marker.options.draggable !== undefined) {
+          //@ts-ignore
+          marker.options.draggable = true;
+        }
+      });
+    }
+  });
+};
+export const disableDraggingForLayer = (layers: any) => {
+  const layerNames = Object.keys(layers);
+  layerNames.forEach((layerName: any) => {
+    const layer = layers[layerName];
+    if (layer instanceof L.LayerGroup || layer instanceof L.FeatureGroup) {
+      layer.eachLayer((marker) => {
+        //@ts-ignore
+        if (marker instanceof L.Marker && marker.options.draggable !== undefined) {
+          console.log(layerName);
+          //@ts-ignore
+          marker.options.draggable = false;
+        }
+      });
+    }
+  });
 };
