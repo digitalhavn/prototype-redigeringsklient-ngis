@@ -1,7 +1,7 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS } from './config.js';
-import L, { Layer } from 'leaflet';
+import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
 import { getDatasets, getFeaturesForDatasets } from './ngisClient';
 import { onMarkerClick } from './featureDetails.js';
@@ -49,27 +49,53 @@ const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}
   subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
 });
 
-const statKart = L.tileLayer(
-  `https://opencache{s}.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=norgeskart_bakgrunn&zoom={z}&x={x}&y={y}`,
-  {
-    ...MAP_OPTIONS,
-    detectRetina: true,
-    attribution: '<a href="https://www.kartverket.no/">Kartverket</a>',
-    subdomains: ['', '2', '3'],
-  },
-).addTo(map);
+const OpenStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
 const baseMaps = {
   GoogleSat: googleSat,
-  StatKart: statKart,
+  OpenStreetMap: OpenStreetMap,
 };
+const depthWMS = new L.TileLayer.WMS('https://wms.geonorge.no/skwms1/wms.dybdedata2', {
+  service: 'WMS',
+  version: '1.3.0',
+  request: 'GetMap',
+  format: 'image/png',
+  layers: 'Dybdedata2',
+  CRS: 'EPSG:4326',
+  bbox: '57.021168,0.228508,71.516049,37.230461',
+  tileSize: 1024,
+  updateWhenIdle: false,
+  transparent: true,
+  crossOrigin: true,
+} as WMSOptions).addTo(map);
+
+const symbolWMS = L.tileLayer
+  .wms('https://openwms.statkart.no/skwms1/wms.havnedata', {
+    service: 'WMS',
+    version: '1.3.0',
+    request: 'GetMap',
+    format: 'image/png',
+    layers: 'havnedata',
+    CRS: 'EPSG:4326',
+    bbox: '57.021168,0.228508,71.516049,37.230461',
+    tileSize: 1024,
+    updateWhenIdle: false,
+    transparent: true,
+    crossOrigin: true,
+  } as WMSOptions)
+  .addTo(map);
+
 map.on('zoomend', () => {
   const currentZoom = map.getZoom();
   if (currentZoom < 19) {
-    map.addLayer(statKart);
+    map.addLayer(OpenStreetMap);
     map.removeLayer(googleSat);
+    depthWMS.bringToFront();
+    symbolWMS.bringToFront();
   } else if (currentZoom >= 19) {
     map.addLayer(googleSat);
-    map.removeLayer(statKart);
+    map.removeLayer(OpenStreetMap);
+    depthWMS.bringToFront();
+    symbolWMS.bringToFront();
   }
 });
 const datasets = await getDatasets();
@@ -81,3 +107,5 @@ featuresForDatasets.forEach((datasetFeatures) => {
   });
 });
 L.control.layers(baseMaps, layers).addTo(map);
+depthWMS.bringToFront();
+symbolWMS.bringToFront();
