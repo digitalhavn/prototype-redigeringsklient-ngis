@@ -8,7 +8,7 @@ import { findPath, setLoading } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
-import { handleOpenCreateFeatureModal } from './components/createFeature/index.js';
+import { createFeature } from './components/createFeature/index.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -108,23 +108,6 @@ export const fetchData = async () => {
   setLoading(false);
 };
 
-const modal = document.querySelector('[data-modal]') as HTMLDialogElement;
-
-modal.showModal();
-
-modal.addEventListener('click', (e) => {
-  const dialogBounds = modal.getBoundingClientRect();
-  if (
-    e.clientX < dialogBounds.left ||
-    e.clientX > dialogBounds.right ||
-    e.clientY < dialogBounds.top ||
-    e.clientY > dialogBounds.bottom
-  ) {
-    modal.close();
-  }
-});
-
-handleOpenCreateFeatureModal();
-
 await fetchData();
 renderDatasetOptions();
+createFeature();

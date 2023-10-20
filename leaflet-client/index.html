@@ -12,6 +12,7 @@
   <header>
     <p>Havnedata klient</p>
     <select name="select-dataset" id="select-dataset" style="display: none;"></select>
+    <button id="temp-create-feature-btn" type="button">Create feature</button>
   </header>
 
   <div id="markerInfo" style="display: none"></div>
@@ -31,10 +32,11 @@
   <dialog data-modal class="modal">
     <form id="create-feature-form">
       <h3>Create feature</h3>
-      <button class="cancel" data-close-modal type="submit" formmethod="dialog">X</button>
+      <button class="cancel" id="close-modal-button" type="button">X</button>
       <label for="feature-type">Feature type</label>
-      <input id="feature-type" name="feature-type" type="text">
+      <select id="feature-type" name="feature-type" type="text"></select>
       <div id="choose-feature-properties"></div>
+      <button type="submit" formmethod="dialog">Submit</button>
     </form>
   </dialog>
 
