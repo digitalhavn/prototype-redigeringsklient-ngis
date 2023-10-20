@@ -1,5 +1,5 @@
-import Ajv, { JSONSchemaType } from 'ajv/dist/2020';
-import { schemas } from './main';
+import Ajv, { JSONSchemaType } from 'ajv';
+import { State } from './state';
 import { AnyValidateFunction } from 'ajv/dist/core';
 
 export const ajv = new Ajv();
@@ -17,17 +17,8 @@ ajv.addKeyword({
   type: 'object',
 });
 
-export const findSchemaByTitle = (title: string): JSONSchemaType<any> | null => {
-  const schema = schemas.find((schema) =>
-    schema.properties.features.items.anyOf.find((item: any) => item.title === title),
-  );
-
-  if (schema) {
-    const matchingItem = schema.properties.features.items.anyOf.find((item: any) => item.title === title);
-    return matchingItem || null; // Return the matching item or null if not found
-  }
-
-  return null;
+export const findSchemaByTitle = (title: string): JSONSchemaType<any> | undefined => {
+  return State.schema?.properties.features.items.anyOf.find((item: any) => item.title === title);
 };
 
 /**

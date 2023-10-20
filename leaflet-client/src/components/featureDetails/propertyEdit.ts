@@ -1,5 +1,5 @@
 import { deleteLayer } from '../../main';
-import { getAndLockFeature, updateFeature, updateFeatureProperties } from '../../ngisClient';
+import { getAndLockFeature, putFeature, updateFeatureProperties } from '../../ngisClient';
 import cloneDeep from 'lodash/cloneDeep';
 import { setLoading } from '../../util';
 import { showUpdateMessage } from '../alerts/update';
@@ -30,7 +30,7 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
   if (!validate || validate(feature)) {
     handleCancelButtonClick();
     console.log('Data is valid');
-    await updateFeatureProperties(feature);
+    await updateFeatureProperties(feature.properties);
     showUpdateMessage();
   } else {
     console.log('Validation errors: ', validate.errors);
@@ -54,9 +54,9 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
 const handleDeleteButtonClick = async (feature: NGISFeature) => {
   setLoading(true);
 
-  await getAndLockFeature(feature.properties!.datasetId, feature.properties!.identifikasjon.lokalId);
+  await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
 
-  const saveResponse = await updateFeature(feature, feature.geometry.coordinates, 'Erase');
+  const saveResponse = await putFeature(feature, feature.geometry.coordinates, 'Erase');
 
   if (saveResponse.features_erased > 0) {
     deleteLayer(feature);
