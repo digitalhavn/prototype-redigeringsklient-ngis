@@ -45,14 +45,14 @@ const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
 // Adding base maps
 const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-  maxZoom: 21,
+  ...MAP_OPTIONS,
   subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
 });
 
 const statKart = L.tileLayer(
   `https://opencache{s}.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=norgeskart_bakgrunn&zoom={z}&x={x}&y={y}`,
   {
-    maxZoom: 20,
+    ...MAP_OPTIONS,
     detectRetina: true,
     attribution: '<a href="https://www.kartverket.no/">Kartverket</a>',
     subdomains: ['', '2', '3'],
@@ -64,19 +64,15 @@ const baseMaps = {
 };
 map.on('zoomend', () => {
   const currentZoom = map.getZoom();
-  console.log(currentZoom);
   if (currentZoom < 19) {
-    // Switch to OpenStreetMap at lower zoom levels
     map.addLayer(statKart);
     map.removeLayer(googleSat);
   } else if (currentZoom >= 19) {
-    // Switch to other Google layers at zoom levels 18 and higher
     map.addLayer(googleSat);
     map.removeLayer(statKart);
   }
 });
 const datasets = await getDatasets();
-console.log(datasets);
 const featuresForDatasets = await getFeaturesForDatasets(datasets);
 featuresForDatasets.forEach((datasetFeatures) => {
   datasetFeatures.featureCollection.features.forEach((feature: Feature) => {
