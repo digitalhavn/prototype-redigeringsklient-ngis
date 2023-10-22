@@ -4,6 +4,7 @@ import { Dataset } from './types/dataset';
 import axios from 'axios';
 import { EditFeaturesSummary } from './types/editFeaturesSummary';
 import { JSONSchemaType } from 'ajv';
+import { NGISFeature } from './types/feature';
 
 export const getDatasets = async (): Promise<Dataset[]> => {
   const response = await axios.get(`${NGIS_PROXY_URL}/datasets`);
@@ -72,5 +73,39 @@ export const updateFeature = async (
     payload,
     { headers: { 'Content-Type': 'application/json' } },
   );
+  return response.data;
+};
+
+export const updateFeatures = async (features: NGISFeature[]) => {
+  const { datasetId, ...properties } = features[0].properties as any;
+  console.log(properties);
+  features.forEach((feature) => {
+    getAndLockFeature(datasetId, feature.properties!.identifikasjon.lokalId);
+  });
+  const featuresWithUpdate = features.map((feature) => {
+    delete feature.properties!.datasetId;
+    return {
+      ...feature,
+      update: {
+        action: 'Replace',
+      },
+    };
+  });
+  const payload = {
+    type: 'FeatureCollection',
+    crs: {
+      type: 'name',
+      properties: {
+        name: 'EPSG:4258',
+      },
+    },
+    features: featuresWithUpdate,
+  };
+  const response = await axios.post(
+    `${NGIS_PROXY_URL}/datasets/${datasetId}/features?crs_EPSG=4258&locking_type=user_lock`,
+    payload,
+    { headers: { 'Content-Type': 'application/json' } },
+  );
+  console.log(response);
   return response.data;
 };

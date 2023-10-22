@@ -266,9 +266,21 @@ tr:nth-child(even) {
   text-align: center;
   margin: 5px;
 }
-#enableDragButton {
+#editMap {
   z-index: 1000;
+  display: none;
+  color: black;
+  background-color: blue;
 }
-#disableDragButton {
+#saveChanges {
   z-index: 1000;
+  display: none;
+  color: rgb(255, 255, 255);
+  background-color: green;
+}
+#discardChanges {
+  z-index: 1000;
+  display: none;
+  color: rgb(255, 255, 255);
+  background-color: red;
 }

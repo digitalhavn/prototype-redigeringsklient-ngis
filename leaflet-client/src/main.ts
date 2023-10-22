@@ -4,20 +4,27 @@ import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS } from './config.js
 import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/index.js';
-import { findPath, setLoading, enableDraggingForLayer, disableDraggingForLayer } from './util.js';
+import { findPath, setLoading } from './util.js';
 import { getDatasets, getFeaturesForDatasets, getSchema } from './ngisClient.js';
-import 'leaflet-draw';
+import {
+  editMap,
+  saveChanges,
+  editedFeatures,
+  saveEdits,
+  discardEdits,
+} from './components/featureDetails/interactiveGeometry.js';
 
-const addToOrCreateLayer = (feature: Feature) => {
+const saveChangesButton = document.getElementById('saveChanges');
+const editMapButton = document.getElementById('editMap');
+const discardChangesButton = document.getElementById('discardChanges');
+
+const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = false) => {
+  feature.properties!.draggable = makeDraggable;
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
     layers[objectType] = L.geoJson(undefined, {
       style: () => {
         return GEO_JSON_STYLE_OPTIONS[feature.geometry.type];
-      },
-      onEachFeature: (feature, layer) => {
-        featuresMap[feature.properties.identifikasjon.lokalId] = layer;
-        layer.on('click', onMarkerClick);
       },
       pointToLayer: (feature) => {
         const path = findPath(feature);
@@ -26,17 +33,16 @@ const addToOrCreateLayer = (feature: Feature) => {
           iconSize: [15, 15],
         });
         const [lng, lat] = feature.geometry.coordinates;
-        const marker = L.marker([lng, lat], { icon: customIcon, draggable: false });
-
+        const marker = L.marker([lng, lat], { icon: customIcon, draggable: feature.properties!.draggable });
+        delete feature.properties!.draggable;
         marker.on('dragend', (event) => {
-          const updatedLatLng = event.target.getLatLng();
-          event.target.feature.geometry.coordinates = [
-            updatedLatLng.lat,
-            updatedLatLng.lng,
-            event.target.feature.geometry.coordinates[2],
-          ];
+          editedFeatures(event);
         });
         return marker;
+      },
+      onEachFeature: (feature: Feature, layer: L.Layer) => {
+        featuresMap[feature.properties!.identifikasjon.lokalId] = layer;
+        layer.on('click', onMarkerClick);
       },
       coordsToLatLng: (coords) => {
         return L.latLng(coords);
@@ -46,9 +52,9 @@ const addToOrCreateLayer = (feature: Feature) => {
   layers[objectType].addData(feature);
 };
 
-export const updateLayer = (updatedFeature: Feature) => {
+export const updateLayer = (updatedFeature: Feature, makeDraggable: boolean = false) => {
   deleteLayer(updatedFeature);
-  addToOrCreateLayer(updatedFeature);
+  addToOrCreateLayer(updatedFeature, makeDraggable);
 };
 
 export const deleteLayer = (deletedFeature: Feature) => {
@@ -97,9 +103,37 @@ setLoading(false);
 
 wmsLayer.addTo(map);
 L.control.layers(undefined, layers).addTo(map);
-const enableDragButton = document.getElementById('enableDragButton'); // Replace with your button's ID
-enableDragButton!.addEventListener('click', () => enableDraggingForLayer(layers));
+map.on('zoomend', () => {
+  if (map.getZoom() >= 18) {
+    if (saveChangesButton!.style.display === '' || saveChangesButton!.style.display === 'none') {
+      editMapButton!.style.display = 'block';
+    }
+  } else {
+    editMapButton!.style.display = 'none';
+  }
+});
+editMapButton!.addEventListener('click', () => {
+  editMapButton!.style.display = 'none';
+  saveChangesButton!.style.display = 'block';
+  discardChangesButton!.style.display = 'block';
+  editMap(layers);
+});
 
-// Disable dragging for a specific layer when another button is clicked
-const disableDragButton = document.getElementById('disableDragButton'); // Replace with your button's ID
-disableDragButton!.addEventListener('click', () => disableDraggingForLayer(layers));
+saveChangesButton!.addEventListener('click', () => {
+  saveChangesButton!.style.display = 'none';
+  discardChangesButton!.style.display = 'none';
+  saveEdits();
+  if (map.getZoom() >= 18) {
+    editMapButton!.style.display = 'block';
+  }
+  saveChanges(layers);
+});
+discardChangesButton!.addEventListener('click', () => {
+  saveChangesButton!.style.display = 'none';
+  discardChangesButton!.style.display = 'none';
+  discardEdits();
+  if (map.getZoom() >= 18) {
+    editMapButton!.style.display = 'block';
+  }
+  saveChanges(layers);
+});
