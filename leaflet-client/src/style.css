@@ -98,6 +98,11 @@ p {
   position: relative;
 }
 
+.leaflet-control-container {
+  position: absolute;
+  right: 56px;
+}
+
 #i-add-object-button {
   border: none;
 }

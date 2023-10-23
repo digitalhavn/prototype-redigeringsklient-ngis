@@ -1,11 +1,11 @@
-import { toggleLayer } from './main';
+import { toggleLayer } from '../../main';
 
 type details = {
   count: number;
   gType: string;
 };
 
-export const listObjects = (featuretypes: [string, string][]) => {
+export const generateLayerControl = (featuretypes: [string, string][]) => {
   const featuretypeMap = new Map<string, details>();
   featuretypes.forEach((ft: [string, string]) => {
     if (!featuretypeMap.has(ft[0])) {

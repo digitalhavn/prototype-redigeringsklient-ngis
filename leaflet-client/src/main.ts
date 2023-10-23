@@ -8,7 +8,7 @@ import { findPath, setLoading } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
-import { listObjects } from './generateLayerControl.js';
+import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -115,5 +115,5 @@ export const fetchData = async () => {
 };
 
 await fetchData();
-listObjects(featureTypes);
+generateLayerControl(featureTypes);
 renderDatasetOptions();
