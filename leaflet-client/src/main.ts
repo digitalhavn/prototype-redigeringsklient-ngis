@@ -1,5 +1,6 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
+import './components/layerControl/layerControl.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
 import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
