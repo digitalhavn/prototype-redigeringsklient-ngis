@@ -65,10 +65,37 @@ const featuresMap: Record<string, Layer> = {};
 
 export const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
-// Adding base maps
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
+const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+  ...MAP_OPTIONS,
+  subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+});
 
-L.tileLayer
+const OpenStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
+const baseMaps = {
+  GoogleSat: googleSat,
+  OpenStreetMap: OpenStreetMap,
+};
+
+export const flyToActive = () => {
+  const { ur, ll } = State.activeDataset?.bbox!;
+  map.flyToBounds([ur, ll], { duration: 1 });
+};
+
+const depthWMS = new L.TileLayer.WMS('https://wms.geonorge.no/skwms1/wms.dybdedata2', {
+  service: 'WMS',
+  version: '1.3.0',
+  request: 'GetMap',
+  format: 'image/png',
+  layers: 'Dybdedata2',
+  CRS: 'EPSG:4326',
+  bbox: '57.021168,0.228508,71.516049,37.230461',
+  tileSize: 1024,
+  updateWhenIdle: false,
+  transparent: true,
+  crossOrigin: true,
+} as WMSOptions).addTo(map);
+
+const symbolWMS = L.tileLayer
   .wms('https://openwms.statkart.no/skwms1/wms.havnedata', {
     service: 'WMS',
     version: '1.3.0',
@@ -84,10 +111,24 @@ L.tileLayer
   } as WMSOptions)
   .addTo(map);
 
-export const flyToActive = () => {
-  const { ur, ll } = State.activeDataset?.bbox!;
-  map.flyToBounds([ur, ll], { duration: 1 });
-};
+map.on('zoomend', () => {
+  const currentZoom = map.getZoom();
+  if (currentZoom < 19) {
+    map.addLayer(OpenStreetMap);
+    map.removeLayer(googleSat);
+    depthWMS.bringToFront();
+    symbolWMS.bringToFront();
+  } else if (currentZoom >= 19) {
+    map.addLayer(googleSat);
+    map.removeLayer(OpenStreetMap);
+    depthWMS.bringToFront();
+    symbolWMS.bringToFront();
+  }
+});
+
+L.control.layers(baseMaps).addTo(map);
+depthWMS.bringToFront();
+symbolWMS.bringToFront();
 
 setLoading(true);
 const datasets = await getDatasets();
