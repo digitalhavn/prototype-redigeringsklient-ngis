@@ -19,8 +19,8 @@ export const generateLayerControl = (featuretypes: [string, string][]) => {
   });
 };
 
-const objectCollapisble = document.getElementById('i-object-content');
-const areaCollapsible = document.getElementById('i-area-content');
+const objectCollapisble = document.getElementById('object-content');
+const areaCollapsible = document.getElementById('area-content');
 
 const createCheckbox = (featuretype: string, details: details) => {
   const checkboxLabel = document.createElement('label');

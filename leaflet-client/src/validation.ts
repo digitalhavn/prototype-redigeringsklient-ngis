@@ -9,13 +9,13 @@ ajv.addFormat('date-time', {
 ajv.addFormat('date', {
   validate: (date: string) => date !== null,
 });
-/* ajv.addKeyword({
+ajv.addKeyword({
   keyword: 'mandatoryboundaryfeature',
   // TODO: do some actual validation here when we know what this keyword means
   validate: (schema: any) => schema !== null,
   schemaType: 'boolean',
   type: 'object',
-}); */
+});
 
 export const findSchemaByTitle = (title: string): JSONSchemaType<any> | undefined => {
   return State.schema?.properties.features.items.anyOf.find((item: any) => item.title === title);
