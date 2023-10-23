@@ -29,8 +29,6 @@ export const getSchema = async (): Promise<JSONSchemaType<any>> => {
 };
 
 export const updateFeatureProperties = async (properties: GeoJsonProperties) => {
-  console.log('We are going to update this feature now');
-  console.log(properties);
   const response = await axios.put(
     `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features/${properties!.identifikasjon.lokalId}/attributes`,
     properties,

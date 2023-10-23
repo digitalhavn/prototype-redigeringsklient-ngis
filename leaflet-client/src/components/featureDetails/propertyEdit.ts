@@ -27,30 +27,26 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
 
   const validate = getValidation(feature);
   validate && console.log(validate.schema);
-  try {
-    if (!validate || validate(feature)) {
-      handleCancelButtonClick();
-      console.log('Data is valid');
-      await updateFeatureProperties(feature.properties);
-      showUpdateMessage();
-    } else {
-      console.log('Validation errors: ', validate.errors);
-      const errorMessages = validate
-        .errors!.map((error) => {
-          console.log(error);
-          if (error.keyword === 'const') {
-            return `${error.instancePath.split('/')[2]} must be equal to ${error.params.allowedValue}`;
-          } else {
-            return `${error.instancePath.split('/')[2]} ${error.message}`;
-          }
-        })
-        .join(', ');
-      responseField.style.color = 'red'; // Set text color to red
-      responseField.textContent = `Validation errors: ${errorMessages}`;
-      feature = featureCopy;
-    }
-  } catch (error) {
-    console.error('An error occured: ', error);
+  if (!validate || validate(feature)) {
+    handleCancelButtonClick();
+    console.log('Data is valid');
+    await updateFeatureProperties(feature.properties);
+    showUpdateMessage();
+  } else {
+    console.log('Validation errors: ', validate.errors);
+    const errorMessages = validate
+      .errors!.map((error) => {
+        console.log(error);
+        if (error.keyword === 'const') {
+          return `${error.instancePath.split('/')[2]} must be equal to ${error.params.allowedValue}`;
+        } else {
+          return `${error.instancePath.split('/')[2]} ${error.message}`;
+        }
+      })
+      .join(', ');
+    responseField.style.color = 'red'; // Set text color to red
+    responseField.textContent = `Validation errors: ${errorMessages}`;
+    feature = featureCopy;
   }
   setLoading(false);
 };
