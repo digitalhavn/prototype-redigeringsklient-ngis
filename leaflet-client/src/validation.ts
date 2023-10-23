@@ -1,6 +1,6 @@
 import Ajv, { JSONSchemaType } from 'ajv';
-import { schemas } from './main';
 import { Feature } from 'geojson';
+import { State } from './state';
 
 export const ajv = new Ajv();
 ajv.addFormat('date-time', {
@@ -9,25 +9,16 @@ ajv.addFormat('date-time', {
 ajv.addFormat('date', {
   validate: (date: string) => date !== null,
 });
-ajv.addKeyword({
+/* ajv.addKeyword({
   keyword: 'mandatoryboundaryfeature',
   // TODO: do some actual validation here when we know what this keyword means
   validate: (schema: any) => schema !== null,
   schemaType: 'boolean',
   type: 'object',
-});
+}); */
 
-export const findSchemaByTitle = (title: string): JSONSchemaType<any> | null => {
-  const schema = schemas.find((schema) =>
-    schema.properties.features.items.anyOf.find((item: any) => item.title === title),
-  );
-
-  if (schema) {
-    const matchingItem = schema.properties.features.items.anyOf.find((item: any) => item.title === title);
-    return matchingItem || null; // Return the matching item or null if not found
-  }
-
-  return null;
+export const findSchemaByTitle = (title: string): JSONSchemaType<any> | undefined => {
+  return State.schema?.properties.features.items.anyOf.find((item: any) => item.title === title);
 };
 
 /**

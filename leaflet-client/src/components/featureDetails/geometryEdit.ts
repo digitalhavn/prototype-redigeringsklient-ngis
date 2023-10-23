@@ -1,5 +1,5 @@
 import { Position } from 'geojson';
-import { getAndLockFeature, updateFeature } from '../../ngisClient';
+import { getAndLockFeature, putFeature } from '../../ngisClient';
 import { updateLayer } from '../../main';
 import { renderProperties } from './propertyEdit';
 import { NGISFeature } from '../../types/feature';
@@ -24,9 +24,9 @@ export const handleGeometryEdit = async (e: Event, feature: NGISFeature) => {
 
   feature.geometry.type === 'Point' ? (editedGeometry = geometry[0]) : (editedGeometry = geometry);
 
-  await getAndLockFeature(feature.properties!.datasetId, feature.properties!.identifikasjon.lokalId);
+  await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
 
-  const saveResponse = await updateFeature(feature, editedGeometry, 'Replace');
+  const saveResponse = await putFeature(feature, editedGeometry, 'Replace');
   feature.geometry.coordinates = editedGeometry;
 
   if (saveResponse.features_replaced > 0) {

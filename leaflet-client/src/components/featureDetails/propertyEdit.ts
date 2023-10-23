@@ -1,5 +1,5 @@
 import { deleteLayer } from '../../main';
-import { getAndLockFeature, updateFeature, updateFeatureProperties } from '../../ngisClient';
+import { getAndLockFeature, putFeature, updateFeatureProperties } from '../../ngisClient';
 import cloneDeep from 'lodash/cloneDeep';
 import { setLoading } from '../../util';
 import { showUpdateMessage } from '../alerts/update';
@@ -27,26 +27,30 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
 
   const validate = getValidation(feature);
   validate && console.log(validate.schema);
-  if (!validate || validate(feature)) {
-    handleCancelButtonClick();
-    console.log('Data is valid');
-    await updateFeatureProperties(feature);
-    showUpdateMessage();
-  } else {
-    console.log('Validation errors: ', validate.errors);
-    const errorMessages = validate
-      .errors!.map((error) => {
-        console.log(error);
-        if (error.keyword === 'const') {
-          return `${error.instancePath.split('/')[2]} must be equal to ${error.params.allowedValue}`;
-        } else {
-          return `${error.instancePath.split('/')[2]} ${error.message}`;
-        }
-      })
-      .join(', ');
-    responseField.style.color = 'red'; // Set text color to red
-    responseField.textContent = `Validation errors: ${errorMessages}`;
-    feature = featureCopy;
+  try {
+    if (!validate || validate(feature)) {
+      handleCancelButtonClick();
+      console.log('Data is valid');
+      await updateFeatureProperties(feature.properties);
+      showUpdateMessage();
+    } else {
+      console.log('Validation errors: ', validate.errors);
+      const errorMessages = validate
+        .errors!.map((error) => {
+          console.log(error);
+          if (error.keyword === 'const') {
+            return `${error.instancePath.split('/')[2]} must be equal to ${error.params.allowedValue}`;
+          } else {
+            return `${error.instancePath.split('/')[2]} ${error.message}`;
+          }
+        })
+        .join(', ');
+      responseField.style.color = 'red'; // Set text color to red
+      responseField.textContent = `Validation errors: ${errorMessages}`;
+      feature = featureCopy;
+    }
+  } catch (error) {
+    console.error('An error occured: ', error);
   }
   setLoading(false);
 };
@@ -54,9 +58,9 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
 const handleDeleteButtonClick = async (feature: NGISFeature) => {
   setLoading(true);
 
-  await getAndLockFeature(feature.properties!.datasetId, feature.properties!.identifikasjon.lokalId);
+  await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
 
-  const saveResponse = await updateFeature(feature, feature.geometry.coordinates, 'Erase');
+  const saveResponse = await putFeature(feature, feature.geometry.coordinates, 'Erase');
 
   if (saveResponse.features_erased > 0) {
     deleteLayer(feature);
