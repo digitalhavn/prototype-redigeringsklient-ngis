@@ -1,4 +1,4 @@
-import { toggleLayer } from '../../main';
+import { layers, map, toggleLayer } from '../../main';
 
 type details = {
   count: number;
@@ -6,6 +6,11 @@ type details = {
 };
 
 export const generateLayerControl = (featuretypes: [string, string][]) => {
+  const objectCollapsible = document.getElementById('object-content')! as HTMLDivElement;
+  objectCollapsible.innerHTML = '';
+  const areaCollapsible = document.getElementById('area-content')! as HTMLDivElement;
+  areaCollapsible.innerHTML = '';
+
   const featuretypeMap = new Map<string, details>();
   featuretypes.forEach((ft: [string, string]) => {
     if (!featuretypeMap.has(ft[0])) {
@@ -15,14 +20,16 @@ export const generateLayerControl = (featuretypes: [string, string][]) => {
     }
   });
   featuretypeMap.forEach((value: details, key: string) => {
-    createCheckbox(key, value);
+    createCheckbox(key, value, objectCollapsible, areaCollapsible);
   });
 };
 
-const objectCollapisble = document.getElementById('object-content');
-const areaCollapsible = document.getElementById('area-content');
-
-const createCheckbox = (featuretype: string, details: details) => {
+const createCheckbox = (
+  featuretype: string,
+  details: details,
+  objectCollapsible: HTMLDivElement,
+  areaCollapsible: HTMLDivElement,
+) => {
   const checkboxLabel = document.createElement('label');
   checkboxLabel.className = 'c-checkbox-label';
   checkboxLabel.textContent = `${featuretype} (${details.count})`;
@@ -31,6 +38,7 @@ const createCheckbox = (featuretype: string, details: details) => {
   const checkboxId = `checkbox-${featuretype}`;
   checkbox.id = checkboxId;
   checkbox.value = featuretype;
+  checkbox.checked = map.hasLayer(layers[featuretype]);
   const customCheckbox = document.createElement('span');
   customCheckbox.className = 'c-checkmark-span';
   checkboxLabel.setAttribute('for', checkboxId);
@@ -41,6 +49,6 @@ const createCheckbox = (featuretype: string, details: details) => {
   checkboxLabel.appendChild(checkbox);
   checkboxLabel.appendChild(customCheckbox);
   details.gType === 'Point'
-    ? objectCollapisble?.appendChild(checkboxLabel)
+    ? objectCollapsible?.appendChild(checkboxLabel)
     : areaCollapsible?.appendChild(checkboxLabel);
 };
