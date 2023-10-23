@@ -1,5 +1,6 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
+import './components/layerControl/layerControl.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
 import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
@@ -8,6 +9,7 @@ import { findPath, setLoading } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
+import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -47,13 +49,21 @@ export const deleteLayer = (deletedFeature: Feature) => {
   layers[deletedFeature.properties!.featuretype].removeLayer(deletedLayer);
 };
 
-const layers: Record<string, L.GeoJSON> = {};
+export const toggleLayer = (checkbox: HTMLInputElement) => {
+  if (checkbox.checked) {
+    map.addLayer(layers[checkbox.value]);
+  } else {
+    map.removeLayer(layers[checkbox.value]);
+  }
+};
+
+export const layers: Record<string, L.GeoJSON> = {};
 
 // Maps feature local ID to leaflet layer in order to
 // update and delete already created layers
 const featuresMap: Record<string, Layer> = {};
 
-const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
+export const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
 // Adding base maps
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
@@ -74,8 +84,6 @@ L.tileLayer
   } as WMSOptions)
   .addTo(map);
 
-const controlLayers = L.control.layers();
-
 export const flyToActive = () => {
   const { ur, ll } = State.activeDataset?.bbox!;
   map.flyToBounds([ur, ll], { duration: 1 });
@@ -86,11 +94,13 @@ const datasets = await getDatasets();
 State.setDatasets(datasets);
 State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
 
+const featureTypes: [string, string][] = [];
+
 export const fetchData = async () => {
   setLoading(true);
 
   Object.keys(layers).forEach((key) => {
-    controlLayers.removeLayer(layers[key]);
+    featureTypes.splice(0, featureTypes.length);
     layers[key].clearLayers();
   });
 
@@ -98,11 +108,11 @@ export const fetchData = async () => {
   State.setSchema(await getSchema());
 
   const datasetFeatures = await getDatasetFeatures();
-  datasetFeatures.features.forEach(addToOrCreateLayer);
-
-  Object.entries(layers).forEach(([key, value]) => {
-    controlLayers.addOverlay(value, key).addTo(map);
+  datasetFeatures.features.forEach((feature) => {
+    featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+    addToOrCreateLayer(feature);
   });
+  generateLayerControl(featureTypes);
 
   setLoading(false);
 };
