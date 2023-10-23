@@ -56,13 +56,13 @@ export const toggleLayer = (checkbox: HTMLInputElement) => {
   }
 };
 
-const layers: Record<string, L.GeoJSON> = {};
+export const layers: Record<string, L.GeoJSON> = {};
 
 // Maps feature local ID to leaflet layer in order to
 // update and delete already created layers
 const featuresMap: Record<string, Layer> = {};
 
-const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
+export const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
 // Adding base maps
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
@@ -94,11 +94,12 @@ State.setDatasets(datasets);
 State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
 
 const featureTypes: [string, string][] = [];
+
 export const fetchData = async () => {
   setLoading(true);
 
   Object.keys(layers).forEach((key) => {
-    map.removeLayer(layers[key]);
+    featureTypes.splice(0, featureTypes.length);
     layers[key].clearLayers();
   });
 
@@ -110,10 +111,10 @@ export const fetchData = async () => {
     featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
     addToOrCreateLayer(feature);
   });
+  generateLayerControl(featureTypes);
 
   setLoading(false);
 };
 
 await fetchData();
-generateLayerControl(featureTypes);
 renderDatasetOptions();
