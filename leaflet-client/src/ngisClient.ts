@@ -5,6 +5,8 @@ import axios from 'axios';
 import { EditFeaturesSummary } from './types/editFeaturesSummary';
 import { JSONSchemaType } from 'ajv';
 import { NGISFeature } from './types/feature';
+import { cloneDeep } from 'lodash';
+import { showUpdateMessage } from './components/alerts/update';
 
 export const getDatasets = async (): Promise<Dataset[]> => {
   const response = await axios.get(`${NGIS_PROXY_URL}/datasets`);
@@ -50,7 +52,16 @@ export const getAndLockFeature = async (datasetId: string, localId: string): Pro
   );
   return response.data;
 };
-
+export const deleteLocks = async (datasetId: string): Promise<FeatureCollection> => {
+  const response = await axios.delete(`${NGIS_PROXY_URL}/datasets/${datasetId}/locks?locking_type=user_lock`);
+  return response.data;
+};
+export const lockDataset = async (datasetId: string): Promise<FeatureCollection> => {
+  const response = await axios.get(
+    `${NGIS_PROXY_URL}/datasets/${datasetId}/features?crs_EPSG=4258&locking_type=user_lock`,
+  );
+  return response.data;
+};
 export const updateFeature = async (
   feature: Feature,
   coordinates: Position | Position[] | Position[][],
@@ -77,18 +88,16 @@ export const updateFeature = async (
 };
 
 export const updateFeatures = async (features: NGISFeature[]) => {
-  const { datasetId, ...properties } = features[0].properties as any;
-  console.log(properties);
-  features.forEach((feature) => {
-    getAndLockFeature(datasetId, feature.properties!.identifikasjon.lokalId);
-  });
+  const datasetId = cloneDeep(features[0].properties!.datasetId);
+  lockDataset(datasetId);
   const featuresWithUpdate = features.map((feature) => {
-    delete feature.properties!.datasetId;
+    // eslint-disable-next-line no-unused-vars
+    const { datasetId, ...properties } = feature.properties as any;
     return {
-      ...feature,
-      update: {
-        action: 'Replace',
-      },
+      type: 'Feature',
+      geometry: { ...feature.geometry },
+      properties,
+      update: { action: 'Replace' },
     };
   });
   const payload = {
@@ -101,11 +110,14 @@ export const updateFeatures = async (features: NGISFeature[]) => {
     },
     features: featuresWithUpdate,
   };
-  const response = await axios.post(
-    `${NGIS_PROXY_URL}/datasets/${datasetId}/features?crs_EPSG=4258&locking_type=user_lock`,
-    payload,
-    { headers: { 'Content-Type': 'application/json' } },
-  );
-  console.log(response);
-  return response.data;
+  if (featuresWithUpdate.length > 0) {
+    const response = await axios.post(
+      `${NGIS_PROXY_URL}/datasets/${datasetId}/features?crs_EPSG=4258&locking_type=user_lock`,
+      payload,
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+    deleteLocks(datasetId);
+    showUpdateMessage();
+    return response.data;
+  }
 };

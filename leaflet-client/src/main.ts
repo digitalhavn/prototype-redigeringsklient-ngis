@@ -6,17 +6,7 @@ import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/index.js';
 import { findPath, setLoading } from './util.js';
 import { getDatasets, getFeaturesForDatasets, getSchema } from './ngisClient.js';
-import {
-  editMap,
-  saveChanges,
-  editedFeatures,
-  saveEdits,
-  discardEdits,
-} from './components/featureDetails/interactiveGeometry.js';
-
-const saveChangesButton = document.getElementById('saveChanges');
-const editMapButton = document.getElementById('editMap');
-const discardChangesButton = document.getElementById('discardChanges');
+import { editedFeatures } from './components/featureDetails/interactiveGeometry.js';
 
 const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = false) => {
   feature.properties!.draggable = makeDraggable;
@@ -62,7 +52,7 @@ export const deleteLayer = (deletedFeature: Feature) => {
   layers[deletedFeature.properties!.featuretype].removeLayer(deletedLayer);
 };
 
-const layers: Record<string, L.GeoJSON> = {};
+export const layers: Record<string, L.GeoJSON> = {};
 
 // Maps feature local ID to leaflet layer in order to
 // update and delete already created layers
@@ -103,37 +93,3 @@ setLoading(false);
 
 wmsLayer.addTo(map);
 L.control.layers(undefined, layers).addTo(map);
-map.on('zoomend', () => {
-  if (map.getZoom() >= 18) {
-    if (saveChangesButton!.style.display === '' || saveChangesButton!.style.display === 'none') {
-      editMapButton!.style.display = 'block';
-    }
-  } else {
-    editMapButton!.style.display = 'none';
-  }
-});
-editMapButton!.addEventListener('click', () => {
-  editMapButton!.style.display = 'none';
-  saveChangesButton!.style.display = 'block';
-  discardChangesButton!.style.display = 'block';
-  editMap(layers);
-});
-
-saveChangesButton!.addEventListener('click', () => {
-  saveChangesButton!.style.display = 'none';
-  discardChangesButton!.style.display = 'none';
-  saveEdits();
-  if (map.getZoom() >= 18) {
-    editMapButton!.style.display = 'block';
-  }
-  saveChanges(layers);
-});
-discardChangesButton!.addEventListener('click', () => {
-  saveChangesButton!.style.display = 'none';
-  discardChangesButton!.style.display = 'none';
-  discardEdits();
-  if (map.getZoom() >= 18) {
-    editMapButton!.style.display = 'block';
-  }
-  saveChanges(layers);
-});
