@@ -1,14 +1,16 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
+import './components/layerControl/layerControl.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
 import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
-import { onMarkerClick } from './components/featureDetails/index.js';
+import { onMarkerClick } from './components/featureDetails';
 import { findPath, setLoading } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
-import { createFeature } from './components/createFeature/index.js';
+import { createFeature } from './components/createFeature';
+import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -48,18 +50,53 @@ export const deleteLayer = (deletedFeature: Feature) => {
   layers[deletedFeature.properties!.featuretype].removeLayer(deletedLayer);
 };
 
-const layers: Record<string, L.GeoJSON> = {};
+export const toggleLayer = (checkbox: HTMLInputElement) => {
+  if (checkbox.checked) {
+    map.addLayer(layers[checkbox.value]);
+  } else {
+    map.removeLayer(layers[checkbox.value]);
+  }
+};
+
+export const layers: Record<string, L.GeoJSON> = {};
 
 // Maps feature local ID to leaflet layer in order to
 // update and delete already created layers
 const featuresMap: Record<string, Layer> = {};
 
-const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
+export const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
 
-// Adding base maps
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
+const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+  ...MAP_OPTIONS,
+  subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+});
 
-L.tileLayer
+const OpenStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
+const baseMaps = {
+  GoogleSat: googleSat,
+  OpenStreetMap: OpenStreetMap,
+};
+
+export const flyToActive = () => {
+  const { ur, ll } = State.activeDataset?.bbox!;
+  map.flyToBounds([ur, ll], { duration: 1 });
+};
+
+const depthWMS = new L.TileLayer.WMS('https://wms.geonorge.no/skwms1/wms.dybdedata2', {
+  service: 'WMS',
+  version: '1.3.0',
+  request: 'GetMap',
+  format: 'image/png',
+  layers: 'Dybdedata2',
+  CRS: 'EPSG:4326',
+  bbox: '57.021168,0.228508,71.516049,37.230461',
+  tileSize: 1024,
+  updateWhenIdle: false,
+  transparent: true,
+  crossOrigin: true,
+} as WMSOptions).addTo(map);
+
+const symbolWMS = L.tileLayer
   .wms('https://openwms.statkart.no/skwms1/wms.havnedata', {
     service: 'WMS',
     version: '1.3.0',
@@ -75,23 +112,37 @@ L.tileLayer
   } as WMSOptions)
   .addTo(map);
 
-const controlLayers = L.control.layers();
+map.on('zoomend', () => {
+  const currentZoom = map.getZoom();
+  if (currentZoom < 19) {
+    map.addLayer(OpenStreetMap);
+    map.removeLayer(googleSat);
+    depthWMS.bringToFront();
+    symbolWMS.bringToFront();
+  } else if (currentZoom >= 19) {
+    map.addLayer(googleSat);
+    map.removeLayer(OpenStreetMap);
+    depthWMS.bringToFront();
+    symbolWMS.bringToFront();
+  }
+});
 
-export const flyToActive = () => {
-  const { ur, ll } = State.activeDataset?.bbox!;
-  map.flyToBounds([ur, ll], { duration: 1 });
-};
+L.control.layers(baseMaps).addTo(map);
+depthWMS.bringToFront();
+symbolWMS.bringToFront();
 
 setLoading(true);
 const datasets = await getDatasets();
 State.setDatasets(datasets);
 State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
 
+const featureTypes: [string, string][] = [];
+
 export const fetchData = async () => {
   setLoading(true);
 
   Object.keys(layers).forEach((key) => {
-    controlLayers.removeLayer(layers[key]);
+    featureTypes.splice(0, featureTypes.length);
     layers[key].clearLayers();
   });
 
@@ -99,11 +150,11 @@ export const fetchData = async () => {
   State.setSchema(await getSchema());
 
   const datasetFeatures = await getDatasetFeatures();
-  datasetFeatures.features.forEach(addToOrCreateLayer);
-
-  Object.entries(layers).forEach(([key, value]) => {
-    controlLayers.addOverlay(value, key).addTo(map);
+  datasetFeatures.features.forEach((feature) => {
+    featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+    addToOrCreateLayer(feature);
   });
+  generateLayerControl(featureTypes);
 
   setLoading(false);
 };

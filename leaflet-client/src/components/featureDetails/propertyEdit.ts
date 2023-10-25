@@ -73,7 +73,7 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
   contentDiv.innerHTML = '';
 
   const propsHeader = document.createElement('h3');
-  propsHeader.textContent = 'Attributes';
+  propsHeader.textContent = `${feature.properties!.featuretype}`;
   contentDiv.append(propsHeader);
 
   // Create a form element

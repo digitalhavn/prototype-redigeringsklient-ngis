@@ -7,6 +7,7 @@ export const renderDatasetOptions = () => {
   selectActiveDataset.innerHTML = '';
 
   const markerInfoDiv = document.querySelector('#markerInfo') as HTMLDivElement;
+  const objectList = document.querySelector('#object-list') as HTMLDivElement;
 
   State.datasets.forEach((dataset) => {
     const option = document.createElement('option');
@@ -22,6 +23,7 @@ export const renderDatasetOptions = () => {
 
   selectActiveDataset.onchange = async () => {
     markerInfoDiv.style.display = 'none';
+    objectList.style.display = 'block';
     State.activeDataset!.id = selectActiveDataset.value;
     selectActiveDataset.disabled = true;
     await fetchData();

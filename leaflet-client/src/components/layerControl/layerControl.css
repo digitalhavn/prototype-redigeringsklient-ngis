@@ -1,0 +1,170 @@
+.c-side-button {
+  background-color: #335cff;
+  position: relative;
+  margin: 10px 15%;
+  font-size: medium;
+  width: 70%;
+  border-radius: 8px;
+  padding: 0.6em 1.2em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+.collapsible {
+  background-color: #eee;
+  color: #444;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: #1a1a1a;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+  margin: 0.5rem 0 0;
+
+  position: relative;
+  border-radius: 8px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+.collapsible:after {
+  content: '\02795';
+  font-size: 13px;
+  color: black;
+  float: right;
+  margin-left: 5px;
+}
+
+.active:after {
+  content: '\2796';
+}
+
+.active,
+.collapsible:hover {
+  background-color: #ccc;
+}
+
+.c-collapsible-content {
+  padding: 0 18px;
+  background-color: #f1f1f1;
+  overflow: auto;
+  max-height: 0;
+  transition: max-height 0.2s ease-out;
+}
+
+.c-checkbox-label {
+  color: black;
+  display: block;
+  position: relative;
+  padding-left: 35px;
+  cursor: pointer;
+  user-select: none;
+  font-size: small;
+  margin: 5px;
+}
+
+.c-checkbox-label input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.c-checkmark-span {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  height: 15px;
+  width: 15px;
+  background-color: white;
+  border: 1.5px solid black;
+  border-radius: 2px;
+}
+
+.c-checkbox-label:hover input ~ .c-checkmark-span {
+  background-color: #cccc;
+  border-color: #335cff;
+}
+
+.c-checkbox-label input:checked ~ .c-checkmark-span {
+  background-color: #ffffff;
+}
+
+.c-checkmark-span:after {
+  content: '';
+  position: absolute;
+  display: none;
+}
+
+.c-checkbox-label input:checked ~ .c-checkmark-span:after {
+  display: block;
+}
+
+.c-checkbox-label .c-checkmark-span:after {
+  left: 4px;
+  top: 0px;
+  width: 4px;
+  height: 10px;
+  border: solid black;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+#object-list {
+  background-color: white;
+  z-index: 1000;
+  height: 100%;
+  width: 50%;
+  padding: 0 1rem;
+  overflow: auto;
+  position: relative;
+}
+
+#create-feature-button {
+  border: none;
+}
+
+#create-feature-button:hover {
+  background-color: #0033ff;
+}
+
+#reset-map-button {
+  background-color: white;
+  border: 2px solid #335cff;
+  color: #335cff;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+#reset-map-button:hover {
+  background-color: #ececec;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

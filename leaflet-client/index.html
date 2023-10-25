@@ -9,17 +9,13 @@
 </head>
 
 <body>
+
   <header>
     <p>Havnedata klient</p>
     <select name="select-dataset" id="select-dataset" style="display: none;"></select>
-    <button id="temp-create-feature-btn" type="button">Create feature</button>
   </header>
 
-  <div id="markerInfo" style="display: none"></div>
-
-  <div id="map"></div>
-
-  <div class="container" id="loading-container" style="display: none">
+  <div class="container" id="loading-container">
     <div id="loader">
       <img src="/wheel.svg"></img>
     </div>
@@ -27,6 +23,16 @@
 
   <div id="updateMessage" class="update-message">
     <span class="checkmark">&#10004;</span> Update Successful
+  </div>
+
+  <div id="object-list">
+    <button class="c-side-button" id="create-feature-button">Legg til objekt</button>
+    <button type="button" class="collapsible">Objekter</button>
+    <div id="object-content" class="c-collapsible-content"></div>
+    <button type="button" class="collapsible">Flater</button>
+    <div id="area-content" class="c-collapsible-content"></div>
+    <script src="\src\components\layerControl\collapsibleDiv.ts"></script>
+    <button id="reset-map-button" class="c-side-button">Tilbakestill kart</button>
   </div>
 
   <dialog data-modal class="modal">
@@ -39,6 +45,10 @@
       <button type="submit" formmethod="dialog">Submit</button>
     </form>
   </dialog>
+
+  <div id="markerInfo" style="display: none"></div>
+
+  <div id="map"></div>
 
   <script type="module" src="/src/main.ts"></script>
 </body>

@@ -3,7 +3,7 @@ import { JSONSchema4 } from 'json-schema';
 
 export const createFeature = () => {
   const modal = document.querySelector('[data-modal]') as HTMLDialogElement;
-  const openModalBtn = document.querySelector('#temp-create-feature-btn') as HTMLButtonElement;
+  const openModalBtn = document.querySelector('#create-feature-button') as HTMLButtonElement;
 
   openModalBtn.onclick = () => {
     modal.showModal();
