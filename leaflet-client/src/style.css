@@ -172,7 +172,7 @@ p {
 }
 
 .container {
-  z-index: 1000;
+  z-index: 1005;
   width: 100vw; /* Use viewport width to fill the entire screen */
   height: 100vh; /* Use viewport height to fill the entire screen */
   position: fixed; /* Use fixed positioning to keep it centered */
@@ -311,6 +311,7 @@ dialog {
   overflow: auto;
   background: white;
   width: 800px;
+  height: 60%;
   padding: 0;
   border: none;
 }

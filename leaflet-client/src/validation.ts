@@ -20,7 +20,10 @@ ajv.addKeyword({
 
 export const getPossibleFeatureTypes = (): string[] => {
   return State.schema?.properties.features.items.anyOf
-    .filter((item: any) => item.properties.geometry.oneOf[0].properties.type.enum[0] !== 'Polygon')
+    .filter(
+      (item: any) =>
+        item.properties.geometry.oneOf[0].properties.type.enum[0] !== 'Polygon' && item.title !== 'ElKobling',
+    )
     .map((item: JSONSchema4) => item.title);
 };
 

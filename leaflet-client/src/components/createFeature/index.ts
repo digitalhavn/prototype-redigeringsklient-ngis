@@ -1,5 +1,8 @@
+import { NGISFeature } from '../../types/feature';
 import { getFeatureSchema, getPossibleFeatureTypes } from '../../validation';
 import { JSONSchema4 } from 'json-schema';
+
+const newFeature: NGISFeature = { type: 'Feature', geometry: { type: 'Point', coordinates: [] }, properties: {} };
 
 export const createFeature = () => {
   const modal = document.querySelector('[data-modal]') as HTMLDialogElement;
@@ -28,16 +31,28 @@ export const createFeature = () => {
 
 const handleOpenCreateFeatureModal = () => {
   const form = document.querySelector('#create-feature-form') as HTMLFormElement;
-  form.onsubmit = (e) => handleSubmit(e, form);
+  form.onsubmit = handleSubmit;
 
-  const featureTypeSelect = document.querySelector('[name="feature-type"]') as HTMLInputElement;
-  featureTypeSelect.innerHTML = '';
-  getPossibleFeatureTypes().forEach((featureType) => {
+  const featureTypeSelect = document.querySelector('[name="feature-type"]') as HTMLSelectElement;
+
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'Velg featuretype';
+  defaultOption.disabled = true;
+  defaultOption.selected = featureTypeSelect.value === '';
+
+  const featureTypeOptions = getPossibleFeatureTypes().reduce((options: HTMLOptionElement[], featureType) => {
     const option = document.createElement('option');
     option.value = featureType;
     option.textContent = featureType;
-    featureTypeSelect.append(option);
-  });
+    // Remember which value was selected before closing last time
+    option.selected = featureTypeSelect.value === featureType;
+    return [...options, option];
+  }, []);
+
+  featureTypeSelect.innerHTML = '';
+  featureTypeSelect.append(defaultOption);
+  featureTypeSelect.append(...featureTypeOptions);
   featureTypeSelect.onchange = () => renderPropertyInputs(featureTypeSelect.value);
 };
 
@@ -49,31 +64,55 @@ const renderPropertyInputs = (featureType: string) => {
 
   const { properties, required } = schema?.properties.properties as JSONSchema4;
 
+  newFeature.properties = {};
+
   Object.entries(properties!)
     .filter(([propertyName]) => !['identifikasjon', 'featuretype', 'oppdateringsdato'].includes(propertyName))
-    .forEach(([propertyName, property]) => getPropertyInput(propertyName, property, required as string[], inputs));
+    .forEach(([propertyName, property]) =>
+      inputs.append(getPropertyInput(propertyName, property, required as string[], newFeature.properties)),
+    );
 
   return inputs;
 };
 
+/**
+ *
+ * @param propertyName
+ * @param property
+ * @param required
+ * @returns
+ */
 const getPropertyInput = (
   propertyName: string,
   property: JSONSchema4,
   required: string[] | undefined,
-  inputs: HTMLDivElement,
-): void => {
+  properties: any,
+): HTMLElement => {
   if (property.type === 'object') {
-    const objectHeader = document.createElement('h2');
-    objectHeader.textContent = propertyName;
-    inputs.append(objectHeader);
+    properties[propertyName] = {};
+
+    const fieldset = document.createElement('fieldset');
+    const legend = document.createElement('legend');
+    legend.textContent = propertyName;
+
+    fieldset.append(legend);
 
     Object.entries(property.properties!).forEach(([nestedPropertyName, nestedProperty]) =>
-      getPropertyInput(nestedPropertyName, nestedProperty, property.required as string[] | undefined, inputs),
+      fieldset.append(
+        getPropertyInput(
+          nestedPropertyName,
+          nestedProperty,
+          property.required as string[] | undefined,
+          properties[propertyName],
+        ),
+      ),
     );
-    return inputs.append(document.createElement('hr'));
+    return fieldset;
   }
 
   if (property.type === 'array') {
+    properties[propertyName] = [];
+
     // Create checkboxes
     const possibleValues = (property.items as JSONSchema4)?.oneOf;
 
@@ -102,7 +141,7 @@ const getPropertyInput = (
 
       fieldset.append(checkbox, label);
     });
-    return inputs.append(fieldset);
+    return fieldset;
   }
 
   const label = document.createElement('label');
@@ -114,13 +153,20 @@ const getPropertyInput = (
   if (property.type === 'boolean') {
     input = document.createElement('input');
     input.type = 'checkbox';
-    input.checked = false;
+    input.checked = properties[propertyName] = false;
     input.name = input.id = propertyName;
   } else if (property.oneOf) {
     // Create select
     const possibleValues = property.oneOf ?? (property.items as JSONSchema4).oneOf;
     input = document.createElement('select');
     input.name = input.id = propertyName;
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = `Velg ${propertyName}`;
+    defaultOption.selected = true;
+    defaultOption.disabled = true;
+    input.append(defaultOption);
 
     (possibleValues as { const: string; title: string }[]).forEach((possibleValue) => {
       const option = document.createElement('option');
@@ -139,7 +185,12 @@ const getPropertyInput = (
     input.name = input.id = propertyName;
   }
 
-  if (input && required && required.includes(propertyName)) {
+  input.onchange = () =>
+    input?.value !== ''
+      ? (properties[propertyName] = property.type === 'boolean' ? (input as HTMLInputElement).checked : input?.value)
+      : delete properties[propertyName];
+
+  if (property.type !== 'boolean' && required && required.includes(propertyName)) {
     input.required = true;
 
     const req = document.createElement('span');
@@ -150,11 +201,10 @@ const getPropertyInput = (
 
   const inputDiv = document.createElement('div');
   inputDiv.append(label, input);
-  inputs.append(inputDiv);
+  return inputDiv;
 };
 
-const handleSubmit = (e: SubmitEvent, form: HTMLFormElement) => {
+const handleSubmit = (e: SubmitEvent) => {
   e.preventDefault();
-  const data = new FormData(form);
-  console.log(Object.fromEntries(data.entries()));
+  console.log(newFeature);
 };
