@@ -1,6 +1,7 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
 import './components/layerControl/layerControl.css';
+import './components/multiselect/multiselect.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
 import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
@@ -10,6 +11,7 @@ import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisCl
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
+import { initMultiSelect } from './components/multiselect/multiselect.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -119,3 +121,4 @@ export const fetchData = async () => {
 
 await fetchData();
 renderDatasetOptions();
+initMultiSelect();
