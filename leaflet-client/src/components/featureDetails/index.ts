@@ -23,11 +23,14 @@ export const onMarkerClick = (e: { target: { feature: NGISFeature } }) => {
 
   // Display the div
   markerInfoDiv.style.display = 'block';
+
+  (document.querySelector('#object-list')! as HTMLDivElement).style.display = 'none';
 };
 
 export const handleCancelButtonClick = () => {
   const editablePage = document.getElementById('markerInfo');
   if (editablePage) {
     editablePage.style.display = 'none';
+    (document.querySelector('#object-list')! as HTMLDivElement).style.display = 'block';
   }
 };

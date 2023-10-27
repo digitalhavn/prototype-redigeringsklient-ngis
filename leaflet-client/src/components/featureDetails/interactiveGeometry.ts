@@ -23,7 +23,7 @@ const editMap = (layers: any) => {
     }
   });
 };
-const saveChanges = (layers: any) => {
+export const saveChanges = (layers: any) => {
   const layerNames = Object.keys(layers);
   layerNames.forEach((layerName: any) => {
     const layer = layers[layerName];
@@ -72,7 +72,7 @@ const saveEdits = () => {
   }
 };
 
-const discardEdits = () => {
+export const discardEdits = () => {
   if (originalFeatures.length > 0) {
     originalFeatures.forEach((feature: NGISFeature) => {
       updateLayer(feature);
@@ -82,9 +82,9 @@ const discardEdits = () => {
   }
 };
 
-const saveChangesButton = document.getElementById('saveChanges');
-const editMapButton = document.getElementById('editMap');
-const discardChangesButton = document.getElementById('discardChanges');
+export const saveChangesButton = document.getElementById('saveChanges');
+export const editMapButton = document.getElementById('editMap');
+export const discardChangesButton = document.getElementById('discardChanges');
 editMapButton!.addEventListener('click', () => {
   editMapButton!.style.display = 'none';
   saveChangesButton!.style.display = 'block';

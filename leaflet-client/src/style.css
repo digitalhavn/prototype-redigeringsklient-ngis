@@ -5,7 +5,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -14,8 +14,31 @@
   -webkit-text-size-adjust: 100%;
 }
 
+header {
+  width: 100vw;
+  z-index: 1000;
+  height: 3.5rem;
+  border-bottom: 1px solid black;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+header p {
+  font-size: large;
+  font-weight: 500;
+  margin: 0 1rem;
+}
+
+header select {
+  border-radius: 8px;
+  padding: 0.2rem;
+}
+
 h3 {
   text-align: center;
+  color: black;
+  margin: 2%;
 }
 
 a {
@@ -30,31 +53,45 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  place-items: center;
-  min-width: 320px;
+  flex-flow: column;
+  width: 100vh;
   height: 100vh;
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+.leaflet-control-container {
+  position: absolute;
+  right: 56px;
 }
 
 #map {
   position: absolute;
-  top: 0;
+  top: 3.5rem;
   bottom: 0;
-  width: 100%;
+  width: 75%;
+  height: 90vh;
+  margin-left: 25%;
 }
+
 #markerInfo {
   position: relative;
-  z-index: 1000;
-  background-color: #fff;
+  z-index: 1002;
+  /* Add other styles as needed */
+  background-color: white;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+  flex: 1 1 auto;
+  padding: 0 1rem;
   height: 100vh;
-  padding: 0 20px;
-  width: 30rem; /* Limit the maximum width of the div */
-  opacity: 0.9;
+  width: 50%; /* Limit the maximum width of the div */
   overflow-y: auto;
 }
 
@@ -102,7 +139,7 @@ h1 {
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
-  margin-top: 10px;
+  margin: 10px 0;
 }
 
 #markerInfo .default-button:hover {
@@ -229,10 +266,11 @@ tr:nth-child(even) {
 
 #cancel {
   position: absolute;
-  background: gray;
-  color: white;
+  background: white;
+  color: black;
   top: 10px;
   right: 10px;
+  font-weight: bold;
 }
 
 #cancel:hover {
@@ -269,18 +307,57 @@ tr:nth-child(even) {
 #editMap {
   z-index: 1000;
   display: block;
-  color: black;
-  background-color: blue;
+  background-color: #335cff;
+  position: relative;
+  margin: 10px 15px; 
+  font-size: 100%;
+  width: 200px;
+  height: 25px;
+  border-radius: 8px;
+  padding: 0px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.25s; 
 }
-#saveChanges {
+
+#editMap:hover {
+  background-color: #0033ff;
+}
+
+#saveChanges{
   z-index: 1000;
   display: none;
-  color: rgb(255, 255, 255);
-  background-color: green;
+  background-color: #335cff;
+  margin: 10px 15px;
+  font-size: 100%;
+  width: 100px;
+  height: 25px;
+  border-radius: 8px;
+  padding: 0px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.25s;
 }
-#discardChanges {
+#discardChanges{
   z-index: 1000;
   display: none;
-  color: rgb(255, 255, 255);
-  background-color: red;
+  background-color: rgb(255, 42, 42);
+  margin: 10px 0px;
+  font-size: 100%;
+  width: 100px;
+  height: 25px;
+  border-radius: 8px;
+  padding: 0px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.25s;
+}
+#saveChanges:hover {
+  background-color: #0033ff;
+}
+#discardChanges:hover {
+  background-color: #ff0000;
 }
