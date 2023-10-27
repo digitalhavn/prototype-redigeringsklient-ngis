@@ -1,15 +1,15 @@
 import { putFeature } from '../../ngisClient';
 import { NGISFeature } from '../../types/feature';
 import { findPath, setLoading } from '../../util';
-import { getFeatureSchema, getPossibleFeatureTypes } from '../../validation';
+import { getFeatureSchema, getGeometryType, getPossibleFeatureTypes } from '../../validation';
 import { JSONSchema4 } from 'json-schema';
 import { showUpdateMessage } from '../alerts/update';
-import { addToOrCreateLayer, fetchData, map } from '../../main';
+import { fetchData, map } from '../../main';
 import L from 'leaflet';
 
 const newFeature: NGISFeature = {
   type: 'Feature',
-  geometry: { type: 'Point', coordinates: [0, 0, 0] },
+  geometry: { type: 'Point', coordinates: [] },
   properties: {},
 };
 
@@ -144,12 +144,12 @@ const getPropertyInput = (
       checkbox.value = possibleValue.const;
       checkbox.id = checkbox.name = `${propertyName}-${possibleValue.const}`;
       checkbox.onchange = () => {
-	if (checkbox.checked && !properties[propertyName].includes(possibleValue.const)) {
-		properties[propertyName] = [...properties[propertyName], possibleValue.const];
-	} else if (!checkbox.checked && properties[propertyName].includes(possibleValue.const)) {
-		properties[propertyName] = properties[propertyName].filter((value) => value !== possibleValue.const);
-	}
-      }
+        if (checkbox.checked && !properties[propertyName].includes(possibleValue.const)) {
+          properties[propertyName] = [...properties[propertyName], possibleValue.const];
+        } else if (!checkbox.checked && properties[propertyName].includes(possibleValue.const)) {
+          properties[propertyName] = properties[propertyName].filter((value: string) => value !== possibleValue.const);
+        }
+      };
 
       const label = document.createElement('label');
       label.htmlFor = `${propertyName}-${possibleValue.const}`;
@@ -231,7 +231,6 @@ const getPropertyInput = (
 };
 
 const handleSubmit = async () => {
-	console.log(newFeature);
   Object.entries(newFeature.properties).forEach(([property, value]) => {
     if (
       (typeof value === 'object' && Object.keys(value).length === 0) ||
@@ -240,7 +239,9 @@ const handleSubmit = async () => {
       delete newFeature.properties[property];
     }
   });
-  console.log(newFeature);
+
+  const geometryType = getGeometryType(newFeature.properties.featuretype);
+  newFeature.geometry.type = geometryType;
 
   const path = findPath(newFeature);
   const customIcon = L.icon({
@@ -248,61 +249,21 @@ const handleSubmit = async () => {
     iconSize: [15, 15],
   });
 
-  const drawnItems = new L.FeatureGroup();
-  map.addLayer(drawnItems);
-  const drawControlFull = new L.Control.Draw({
-    position: 'topright',
-    edit: {
-      featureGroup: drawnItems,
-    },
-    draw: {
-      marker: {
-        icon: customIcon,
-      },
-      circle: false,
-      polygon: false,
-      circlemarker: false,
-      rectangle: false,
-    },
-  });
+  // Start draw
+  if (geometryType === 'Point') {
+    new L.Draw.Marker(map, { icon: customIcon }).enable();
+  } else if (geometryType === 'LineString') {
+    new L.Draw.Polyline(map).enable();
+  }
 
-  const drawControlEditOnly = new L.Control.Draw({
-    position: 'topright',
-    edit: {
-      featureGroup: drawnItems,
-    },
-    draw: {
-      polyline: false,
-      marker: false,
-      circle: false,
-      polygon: false,
-      circlemarker: false,
-      rectangle: false,
-    },
-  });
+  // When marker is placed or line is drawn, create new feature
+  map.on(L.Draw.Event.CREATED, async ({ layer }) => {
+    const coordinates =
+      geometryType === 'Point'
+        ? [layer._latlng.lat, layer._latlng.lng, 0]
+        : [...layer._latlngs.map(({ lat, lng }: { lat: number; lng: number }) => [lat, lng, 0])];
 
-  map.addControl(drawControlFull);
-
-  const coordinates = [0, 0, 0];
-
-  map.on(L.Draw.Event.CREATED, ({ layer }) => {
-    coordinates[0] = layer._latlng.lat;
-    coordinates[1] = layer._latlng.lng;
-    drawnItems.addLayer(layer);
-    map.removeControl(drawControlFull);
-    map.addControl(drawControlEditOnly);
-  });
-
-  map.on(L.Draw.Event.DELETED, ({ layer }) => {
-    drawnItems.removeLayer(layer);
-    map.removeControl(drawControlEditOnly);
-    map.addControl(drawControlFull);
-  });
-
-  map.on(L.Draw.Event.EDITED, async () => {
     setLoading(true);
-
-    console.log(coordinates);
 
     try {
       const editFeaturesSummary = await putFeature(newFeature, coordinates, 'Create');
@@ -310,37 +271,12 @@ const handleSubmit = async () => {
       if (editFeaturesSummary.features_created > 0) {
         newFeature.geometry.coordinates = coordinates;
         showUpdateMessage();
+        await fetchData();
       }
     } catch (error) {
       console.log(error);
     }
 
-    map.removeControl(drawControlEditOnly);
-    map.removeLayer(drawnItems);
-
-    await fetchData();
-
     setLoading(false);
   });
-
-  // const { validate } = getFeatureSchema(newFeature.properties.featuretype);
-
-  // if (!validate?.(newFeature)) {
-  //   e.preventDefault();
-  //   console.log(validate?.errors);
-  //   const errorMessages = validate
-  //     ?.errors!.map((error) => {
-  //       console.log(error);
-  //       if (error.keyword === 'const') {
-  //         return `${error.instancePath.split('/')[2]} must be equal to ${error.params.allowedValue}`;
-  //       } else {
-  //         return `${error.instancePath.split('/')[2]} ${error.message}`;
-  //       }
-  //     })
-  //     .join(', ');
-  //   const responseField = document.createElement('div');
-  //   responseField.style.color = 'red';
-  //   responseField.textContent = `Validation errors: ${errorMessages}`;
-  //   return document.querySelector('[data-modal]')?.append(responseField);
-  // }
 };

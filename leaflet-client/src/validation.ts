@@ -57,3 +57,9 @@ export const getFeatureSchema = (
   ajv.addSchema(relevantSchema, featureType);
   return { validate: ajv.getSchema(featureType), schema: relevantSchema };
 };
+
+export const getGeometryType = (featuretype: string): 'Point' | 'LineString' | 'Polygon' => {
+  const { schema } = getFeatureSchema(featuretype);
+
+  return schema?.properties.geometry.oneOf[0].properties.type.enum[0];
+};
