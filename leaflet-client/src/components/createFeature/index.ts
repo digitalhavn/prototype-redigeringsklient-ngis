@@ -1,8 +1,17 @@
+import { putFeature } from '../../ngisClient';
 import { NGISFeature } from '../../types/feature';
+import { findPath, setLoading } from '../../util';
 import { getFeatureSchema, getPossibleFeatureTypes } from '../../validation';
 import { JSONSchema4 } from 'json-schema';
+import { showUpdateMessage } from '../alerts/update';
+import { addToOrCreateLayer, fetchData, map } from '../../main';
+import L from 'leaflet';
 
-const newFeature: NGISFeature = { type: 'Feature', geometry: { type: 'Point', coordinates: [] }, properties: {} };
+const newFeature: NGISFeature = {
+  type: 'Feature',
+  geometry: { type: 'Point', coordinates: [0, 0, 0] },
+  properties: {},
+};
 
 export const createFeature = () => {
   const modal = document.querySelector('[data-modal]') as HTMLDialogElement;
@@ -56,15 +65,15 @@ const handleOpenCreateFeatureModal = () => {
   featureTypeSelect.onchange = () => renderPropertyInputs(featureTypeSelect.value);
 };
 
-const renderPropertyInputs = (featureType: string) => {
+const renderPropertyInputs = (featuretype: string) => {
   const inputs = document.querySelector('#choose-feature-properties') as HTMLDivElement;
   inputs.innerHTML = '';
 
-  const { schema } = getFeatureSchema(featureType);
+  const { schema } = getFeatureSchema(featuretype);
 
   const { properties, required } = schema?.properties.properties as JSONSchema4;
 
-  newFeature.properties = {};
+  newFeature.properties = { featuretype };
 
   Object.entries(properties!)
     .filter(([propertyName]) => !['identifikasjon', 'featuretype', 'oppdateringsdato'].includes(propertyName))
@@ -134,6 +143,13 @@ const getPropertyInput = (
       checkbox.type = 'checkbox';
       checkbox.value = possibleValue.const;
       checkbox.id = checkbox.name = `${propertyName}-${possibleValue.const}`;
+      checkbox.onchange = () => {
+	if (checkbox.checked && !properties[propertyName].includes(possibleValue.const)) {
+		properties[propertyName] = [...properties[propertyName], possibleValue.const];
+	} else if (!checkbox.checked && properties[propertyName].includes(possibleValue.const)) {
+		properties[propertyName] = properties[propertyName].filter((value) => value !== possibleValue.const);
+	}
+      }
 
       const label = document.createElement('label');
       label.htmlFor = `${propertyName}-${possibleValue.const}`;
@@ -185,10 +201,20 @@ const getPropertyInput = (
     input.name = input.id = propertyName;
   }
 
-  input.onchange = () =>
-    input?.value !== ''
-      ? (properties[propertyName] = property.type === 'boolean' ? (input as HTMLInputElement).checked : input?.value)
-      : delete properties[propertyName];
+  input.onchange = () => {
+    if (!input?.value) {
+      delete properties[propertyName];
+    } else if (input?.type === 'number') {
+      properties[propertyName] = parseInt(input.value, 10);
+    } else if (property.type === 'boolean') {
+      properties[propertyName] = (input as HTMLInputElement).checked;
+    } else {
+      properties[propertyName] = input.value;
+    }
+  };
+  input?.value !== ''
+    ? (properties[propertyName] = property.type === 'boolean' ? (input as HTMLInputElement).checked : input?.value)
+    : delete properties[propertyName];
 
   if (property.type !== 'boolean' && required && required.includes(propertyName)) {
     input.required = true;
@@ -204,7 +230,117 @@ const getPropertyInput = (
   return inputDiv;
 };
 
-const handleSubmit = (e: SubmitEvent) => {
-  e.preventDefault();
+const handleSubmit = async () => {
+	console.log(newFeature);
+  Object.entries(newFeature.properties).forEach(([property, value]) => {
+    if (
+      (typeof value === 'object' && Object.keys(value).length === 0) ||
+      (Array.isArray(value) && value.length === 0)
+    ) {
+      delete newFeature.properties[property];
+    }
+  });
   console.log(newFeature);
+
+  const path = findPath(newFeature);
+  const customIcon = L.icon({
+    iconUrl: `/havnesymboler/${path}`,
+    iconSize: [15, 15],
+  });
+
+  const drawnItems = new L.FeatureGroup();
+  map.addLayer(drawnItems);
+  const drawControlFull = new L.Control.Draw({
+    position: 'topright',
+    edit: {
+      featureGroup: drawnItems,
+    },
+    draw: {
+      marker: {
+        icon: customIcon,
+      },
+      circle: false,
+      polygon: false,
+      circlemarker: false,
+      rectangle: false,
+    },
+  });
+
+  const drawControlEditOnly = new L.Control.Draw({
+    position: 'topright',
+    edit: {
+      featureGroup: drawnItems,
+    },
+    draw: {
+      polyline: false,
+      marker: false,
+      circle: false,
+      polygon: false,
+      circlemarker: false,
+      rectangle: false,
+    },
+  });
+
+  map.addControl(drawControlFull);
+
+  const coordinates = [0, 0, 0];
+
+  map.on(L.Draw.Event.CREATED, ({ layer }) => {
+    coordinates[0] = layer._latlng.lat;
+    coordinates[1] = layer._latlng.lng;
+    drawnItems.addLayer(layer);
+    map.removeControl(drawControlFull);
+    map.addControl(drawControlEditOnly);
+  });
+
+  map.on(L.Draw.Event.DELETED, ({ layer }) => {
+    drawnItems.removeLayer(layer);
+    map.removeControl(drawControlEditOnly);
+    map.addControl(drawControlFull);
+  });
+
+  map.on(L.Draw.Event.EDITED, async () => {
+    setLoading(true);
+
+    console.log(coordinates);
+
+    try {
+      const editFeaturesSummary = await putFeature(newFeature, coordinates, 'Create');
+
+      if (editFeaturesSummary.features_created > 0) {
+        newFeature.geometry.coordinates = coordinates;
+        showUpdateMessage();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
+    map.removeControl(drawControlEditOnly);
+    map.removeLayer(drawnItems);
+
+    await fetchData();
+
+    setLoading(false);
+  });
+
+  // const { validate } = getFeatureSchema(newFeature.properties.featuretype);
+
+  // if (!validate?.(newFeature)) {
+  //   e.preventDefault();
+  //   console.log(validate?.errors);
+  //   const errorMessages = validate
+  //     ?.errors!.map((error) => {
+  //       console.log(error);
+  //       if (error.keyword === 'const') {
+  //         return `${error.instancePath.split('/')[2]} must be equal to ${error.params.allowedValue}`;
+  //       } else {
+  //         return `${error.instancePath.split('/')[2]} ${error.message}`;
+  //       }
+  //     })
+  //     .join(', ');
+  //   const responseField = document.createElement('div');
+  //   responseField.style.color = 'red';
+  //   responseField.textContent = `Validation errors: ${errorMessages}`;
+  //   return document.querySelector('[data-modal]')?.append(responseField);
+  // }
 };

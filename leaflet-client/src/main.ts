@@ -1,8 +1,10 @@
 import './style.css';
+import L, { Layer, WMSOptions } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw';
+import 'leaflet-draw/dist/leaflet.draw.css';
 import './components/layerControl/layerControl.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
-import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails';
 import { findPath, setLoading } from './util.js';
@@ -12,7 +14,7 @@ import { renderDatasetOptions } from './components/header.js';
 import { createFeature } from './components/createFeature';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
 
-const addToOrCreateLayer = (feature: Feature) => {
+export const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
     layers[objectType] = L.geoJson(undefined, {
