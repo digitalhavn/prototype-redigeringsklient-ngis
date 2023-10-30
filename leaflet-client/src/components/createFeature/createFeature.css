@@ -64,6 +64,7 @@ fieldset {
   width: 70%;
   margin-top: 10px;
   background-color: white;
+  color: #335cff;
   border: 1px solid #335cff;
   font-size: medium;
   border-radius: 8px;
@@ -76,6 +77,7 @@ fieldset {
 
 #choose-feature-properties button:hover {
   background-color: #335cff;
+  color: white;
 }
 
 .req {
