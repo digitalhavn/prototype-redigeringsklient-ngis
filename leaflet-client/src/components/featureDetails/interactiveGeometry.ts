@@ -6,8 +6,7 @@ import { updateFeatures } from '../../ngisClient';
 import { layers } from '../../main';
 
 const editMap = (layers: any) => {
-  const layerNames = Object.keys(layers);
-  layerNames.forEach((layerName: any) => {
+  Object.keys(layers).forEach((layerName: any) => {
     const layer = layers[layerName];
     if (layer instanceof L.GeoJSON) {
       layer.eachLayer((marker) => {
@@ -23,9 +22,8 @@ const editMap = (layers: any) => {
     }
   });
 };
-export const saveChanges = (layers: any) => {
-  const layerNames = Object.keys(layers);
-  layerNames.forEach((layerName: any) => {
+export const exitEdit = (layers: any) => {
+  Object.keys(layers).forEach((layerName: any) => {
     const layer = layers[layerName];
     if (layer instanceof L.GeoJSON) {
       layer.eachLayer((marker) => {
@@ -44,7 +42,7 @@ export const saveChanges = (layers: any) => {
 
 const originalFeatures: NGISFeature[] = [];
 const tempEditedFeatures: NGISFeature[] = [];
-export const editedFeatures = (event: L.DragEndEvent) => {
+export const updateEditedFeatures = (event: L.DragEndEvent) => {
   const updatedLatLng = event.target.getLatLng();
   if (tempEditedFeatures.includes(event.target.feature)) {
     event.target.feature.geometry.coordinates = [
@@ -66,9 +64,14 @@ export const editedFeatures = (event: L.DragEndEvent) => {
 
 const saveEdits = () => {
   if (tempEditedFeatures.length > 0) {
-    updateFeatures(tempEditedFeatures);
-    originalFeatures.length = 0;
-    tempEditedFeatures.length = 0;
+    try {
+      updateFeatures(tempEditedFeatures);
+      originalFeatures.length = 0;
+      tempEditedFeatures.length = 0;
+    } catch (error) {
+      console.error('Error updating features:', error);
+      discardEdits();
+    }
   }
 };
 
@@ -97,12 +100,12 @@ saveChangesButton!.addEventListener('click', () => {
   discardChangesButton!.style.display = 'none';
   saveEdits();
   editMapButton!.style.display = 'block';
-  saveChanges(layers);
+  exitEdit(layers);
 });
 discardChangesButton!.addEventListener('click', () => {
   saveChangesButton!.style.display = 'none';
   discardChangesButton!.style.display = 'none';
   discardEdits();
   editMapButton!.style.display = 'block';
-  saveChanges(layers);
+  exitEdit(layers);
 });

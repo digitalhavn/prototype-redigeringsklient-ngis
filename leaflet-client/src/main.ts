@@ -1,6 +1,7 @@
 import './style.css';
 import 'leaflet/dist/leaflet.css';
 import './components/layerControl/layerControl.css';
+import './components/header/header.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
 import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
@@ -8,10 +9,9 @@ import { onMarkerClick } from './components/featureDetails/index.js';
 import { findPath, setLoading } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
-import { renderDatasetOptions } from './components/header.js';
+import { renderDatasetOptions } from './components/header/header.js';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
-import { editedFeatures } from './components/featureDetails/interactiveGeometry.js';
-
+import { updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
 const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = false) => {
   feature.properties!.draggable = makeDraggable;
   const objectType: string = feature.properties!.featuretype;
@@ -30,7 +30,7 @@ const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = false) =>
         const marker = L.marker([lng, lat], { icon: customIcon, draggable: feature.properties!.draggable });
         delete feature.properties!.draggable;
         marker.on('dragend', (event) => {
-          editedFeatures(event);
+          updateEditedFeatures(event);
         });
         return marker;
       },

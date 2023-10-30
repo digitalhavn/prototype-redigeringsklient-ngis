@@ -1,12 +1,12 @@
-import { fetchData, flyToActive, layers } from '../main';
-import { State } from '../state';
+import { fetchData, flyToActive, layers } from '../../main';
+import { State } from '../../state';
 import {
-  saveChanges,
+  exitEdit,
   discardEdits,
   discardChangesButton,
   saveChangesButton,
   editMapButton,
-} from './featureDetails/interactiveGeometry';
+} from '../featureDetails/interactiveGeometry';
 
 export const renderDatasetOptions = () => {
   const selectActiveDataset = document.querySelector('#select-dataset') as HTMLInputElement;
@@ -37,7 +37,7 @@ export const renderDatasetOptions = () => {
     discardChangesButton!.style.display = 'none';
     discardEdits();
     editMapButton!.style.display = 'block';
-    saveChanges(layers);
+    exitEdit(layers);
     await fetchData();
     selectActiveDataset.disabled = false;
     flyToActive();

@@ -157,7 +157,19 @@ p {
   border-radius: 5px;
   opacity: 0;
 }
-.update-message.show {
+.error-message {
+  z-index: 1000;
+  display: block;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: red;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  opacity: 0;
+}
+.update-message.show, .error-message.show {
   animation: fadeOut 2s ease-in-out forwards;
 }
 
@@ -303,61 +315,4 @@ tr:nth-child(even) {
   border: 1px solid #ddd;
   text-align: center;
   margin: 5px;
-}
-#editMap {
-  z-index: 1000;
-  display: block;
-  background-color: #335cff;
-  position: relative;
-  margin: 10px 15px; 
-  font-size: 100%;
-  width: 200px;
-  height: 25px;
-  border-radius: 8px;
-  padding: 0px;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 0.25s; 
-}
-
-#editMap:hover {
-  background-color: #0033ff;
-}
-
-#saveChanges{
-  z-index: 1000;
-  display: none;
-  background-color: #335cff;
-  margin: 10px 15px;
-  font-size: 100%;
-  width: 100px;
-  height: 25px;
-  border-radius: 8px;
-  padding: 0px;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 0.25s;
-}
-#discardChanges{
-  z-index: 1000;
-  display: none;
-  background-color: rgb(255, 42, 42);
-  margin: 10px 0px;
-  font-size: 100%;
-  width: 100px;
-  height: 25px;
-  border-radius: 8px;
-  padding: 0px;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 0.25s;
-}
-#saveChanges:hover {
-  background-color: #0033ff;
-}
-#discardChanges:hover {
-  background-color: #ff0000;
 }

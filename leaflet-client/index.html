@@ -11,9 +11,9 @@
     <header>
       <p>Havnedata klient</p>
       <select name="select-dataset" id="select-dataset" style="display: none;"></select>
-      <button id="saveChanges">Save changes</button>
-      <button id="discardChanges">Discard changes</button>
-      <button id="editMap">Edit map</button>
+      <button id="saveChanges">Lagre endringer</button>
+      <button id="discardChanges">Angre endringer</button>
+      <button id="editMap">Rediger kart</button>
     </header>
 
     <div class="container" id="loading-container">
@@ -23,7 +23,10 @@
     </div>
 
     <div id="updateMessage" class="update-message">
-      <span class="checkmark">&#10004;</span> Update Successful
+      <span class="checkmark">&#10004;</span> Endringer lagret
+    </div>
+    <div id="errorMessage" class="error-message">
+      <span class="error"></span> Noe gikk galt
     </div>
     
     <div id="object-list">

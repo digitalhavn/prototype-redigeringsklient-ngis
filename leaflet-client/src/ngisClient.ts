@@ -7,6 +7,7 @@ import { JSONSchemaType } from 'ajv';
 import { State } from './state';
 import { NGISFeature } from './types/feature';
 import { showUpdateMessage } from './components/alerts/update';
+import { showErrorMessage } from './components/alerts/error';
 
 export const getDatasets = async (): Promise<Dataset[]> => {
   const response = await axios.get(`${NGIS_PROXY_URL}/datasets`);
@@ -45,6 +46,14 @@ export const getAndLockFeature = async (localId: string): Promise<FeatureCollect
   );
   return response.data;
 };
+export const getAndLockFeatures = async (localIds: string[]): Promise<FeatureCollection> => {
+  const localIdStrings = localIds.join(',');
+  const response = await axios.get(
+    `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?query=in(*/identifikasjon/lokalid,${localIdStrings})&crs_EPSG=4258&locking_type=user_lock`,
+  );
+  return response.data;
+};
+
 export const deleteLocks = async (): Promise<FeatureCollection> => {
   const response = await axios.delete(
     `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/locks?locking_type=user_lock`,
@@ -89,7 +98,7 @@ export const putFeature = async (
 };
 
 export const updateFeatures = async (features: NGISFeature[]) => {
-  lockDataset();
+  const localIdStrings = features.map((feature) => feature.properties!.identifikasjon.lokalId);
   const featuresWithUpdate = features.map((feature) => {
     return {
       type: 'Feature',
@@ -108,14 +117,21 @@ export const updateFeatures = async (features: NGISFeature[]) => {
     },
     features: featuresWithUpdate,
   };
-  if (featuresWithUpdate.length > 0) {
-    const response = await axios.post(
-      `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&locking_type=user_lock`,
-      payload,
-      { headers: { 'Content-Type': 'application/json' } },
-    );
+  try {
+    await getAndLockFeatures(localIdStrings);
+    if (featuresWithUpdate.length > 0) {
+      const response = await axios.post(
+        `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&locking_type=user_lock`,
+        payload,
+        { headers: { 'Content-Type': 'application/json' } },
+      );
+      deleteLocks();
+      showUpdateMessage();
+      return response.data;
+    }
+  } catch (error) {
+    console.log(error);
+    showErrorMessage();
     deleteLocks();
-    showUpdateMessage();
-    return response.data;
   }
 };
