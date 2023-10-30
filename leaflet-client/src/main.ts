@@ -13,6 +13,9 @@ import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
 import { renderCreateFeature } from './components/createFeature';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
+import drawLocales from 'leaflet-draw-locales';
+
+drawLocales('norwegian');
 
 export const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
