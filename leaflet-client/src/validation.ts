@@ -1,6 +1,7 @@
 import Ajv, { JSONSchemaType } from 'ajv';
-import { Feature } from 'geojson';
 import { State } from './state';
+import { AnyValidateFunction } from 'ajv/dist/core';
+import { JSONSchema4 } from 'json-schema';
 
 export const ajv = new Ajv();
 ajv.addFormat('date-time', {
@@ -17,8 +18,17 @@ ajv.addKeyword({
   type: 'object',
 });
 
+export const getPossibleFeatureTypes = (): string[] => {
+  return State.schema?.properties.features.items.anyOf
+    .filter(
+      (item: any) =>
+        item.properties.geometry.oneOf[0].properties.type.enum[0] !== 'Polygon' && item.title !== 'ElKobling',
+    )
+    .map((item: JSONSchema4) => item.title);
+};
+
 export const findSchemaByTitle = (title: string): JSONSchemaType<any> | undefined => {
-  return State.schema?.properties.features.items.anyOf.find((item: any) => item.title === title);
+  return State.schema?.properties.features.items.anyOf.find((item: JSONSchema4) => item.title === title);
 };
 
 /**
@@ -28,21 +38,28 @@ export const findSchemaByTitle = (title: string): JSONSchemaType<any> | undefine
  * @param feature
  * @returns validate function or null if no schema is found for the feature
  */
-export const getValidation = (feature: Feature) => {
-  const { featuretype } = feature.properties!;
-
-  const validate = ajv.getSchema(featuretype);
+export const getFeatureSchema = (
+  featureType: string,
+): { validate: AnyValidateFunction<unknown> | undefined | null; schema: JSONSchemaType<any> | null } => {
+  const validate = ajv.getSchema(featureType);
 
   if (validate) {
-    return validate;
+    return { validate, schema: validate.schema as JSONSchemaType<any> };
   }
 
-  const relevantSchema = findSchemaByTitle(feature.properties!.featuretype);
+  const relevantSchema = findSchemaByTitle(featureType);
 
   if (!relevantSchema) {
-    return null;
+    return { validate: null, schema: null };
   }
 
-  ajv.addSchema(relevantSchema, featuretype);
-  return ajv.getSchema(featuretype);
+  ajv.compile(relevantSchema);
+  ajv.addSchema(relevantSchema, featureType);
+  return { validate: ajv.getSchema(featureType), schema: relevantSchema };
+};
+
+export const getGeometryType = (featuretype: string): 'Point' | 'LineString' | 'Polygon' => {
+  const { schema } = getFeatureSchema(featuretype);
+
+  return schema?.properties.geometry.oneOf[0].properties.type.enum[0];
 };

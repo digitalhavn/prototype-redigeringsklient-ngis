@@ -1,42 +1,56 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Leaflet Kartklient</title>
-  </head>
-  <body>
 
-    <header>
-      <p>Havnedata klient</p>
-      <select name="select-dataset" id="select-dataset" style="display: none;"></select>
-    </header>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaflet Kartklient</title>
+</head>
 
-    <div class="container" id="loading-container">
-      <div id="loader">
-        <img src="/wheel.svg"></img>
-      </div>
+<body>
+
+  <header>
+    <p>Havnedata klient</p>
+    <select name="select-dataset" id="select-dataset" style="display: none;"></select>
+  </header>
+
+  <div class="container" id="loading-container">
+    <div id="loader">
+      <img src="/wheel.svg"></img>
     </div>
-  
-    <div id="updateMessage" class="update-message">
-      <span class="checkmark">&#10004;</span> Update Successful
-    </div>
-    
-    <div id="object-list">
-      <button class="c-side-button" id="add-object-button">Legg til objekt</button>
-      <button type="button" class="collapsible">Objekter</button>
-      <div id="object-content" class="c-collapsible-content"></div>
-      <button type="button" class="collapsible">Flater</button>
-      <div id="area-content" class="c-collapsible-content"></div>
-      <script src="\src\components\layerControl\collapsibleDiv.ts"></script>
-      <button id="reset-map-button" class="c-side-button">Tilbakestill kart</button>
-    </div>
+  </div>
 
-    <div id="markerInfo" style="display: none"></div>
+  <div id="updateMessage" class="update-message">
+    <span class="checkmark">&#10004;</span> Update Successful
+  </div>
 
-    <div id="map"></div>
-    
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+  <div id="object-list">
+    <button class="c-side-button" id="create-feature-button">Legg til objekt</button>
+    <button type="button" class="collapsible">Objekter</button>
+    <div id="object-content" class="c-collapsible-content"></div>
+    <button type="button" class="collapsible">Flater</button>
+    <div id="area-content" class="c-collapsible-content"></div>
+    <script src="\src\components\layerControl\collapsibleDiv.ts"></script>
+    <button id="reset-map-button" class="c-side-button">Tilbakestill kart</button>
+  </div>
+
+  <dialog data-modal class="modal">
+    <form id="create-feature-form">
+      <h3>Ny feature</h3>
+      <button class="cancel" id="close-modal-button" type="button">X</button>
+      <label for="feature-type">Feature type</label>
+      <br>
+      <select id="feature-type" name="feature-type" type="text"></select>
+      <div id="choose-feature-properties"></div>
+    </form>
+  </dialog>
+
+  <div id="markerInfo" style="display: none"></div>
+
+  <div id="map"></div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>
