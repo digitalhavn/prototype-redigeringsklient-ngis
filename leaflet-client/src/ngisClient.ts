@@ -7,6 +7,7 @@ import { JSONSchemaType } from 'ajv';
 import { State } from './state';
 import { NGISFeature } from './types/feature';
 import { showUpdateMessage } from './components/alerts/update';
+import { setLoading } from './util';
 
 export const getDatasets = async (): Promise<Dataset[]> => {
   const response = await axios.get(`${NGIS_PROXY_URL}/datasets`);
@@ -45,18 +46,21 @@ export const getAndLockFeature = async (localId: string): Promise<FeatureCollect
   );
   return response.data;
 };
+
 export const deleteLocks = async (): Promise<FeatureCollection> => {
   const response = await axios.delete(
     `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/locks?locking_type=user_lock`,
   );
   return response.data;
 };
+
 export const lockDataset = async (): Promise<FeatureCollection> => {
   const response = await axios.get(
     `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&locking_type=user_lock`,
   );
   return response.data;
 };
+
 export const putFeature = async (
   feature: Feature,
   coordinates: Position | Position[] | Position[][],
@@ -89,7 +93,8 @@ export const putFeature = async (
 };
 
 export const updateFeatures = async (features: NGISFeature[]) => {
-  lockDataset();
+  setLoading(true);
+  await lockDataset();
   const featuresWithUpdate = features.map((feature) => {
     return {
       type: 'Feature',
@@ -109,13 +114,19 @@ export const updateFeatures = async (features: NGISFeature[]) => {
     features: featuresWithUpdate,
   };
   if (featuresWithUpdate.length > 0) {
-    const response = await axios.post(
-      `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&locking_type=user_lock`,
-      payload,
-      { headers: { 'Content-Type': 'application/json' } },
-    );
-    deleteLocks();
-    showUpdateMessage();
-    return response.data;
+    console.log('hello');
+
+    try {
+      await axios.post(
+        `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&locking_type=user_lock`,
+        payload,
+        { headers: { 'Content-Type': 'application/json' } },
+      );
+      await deleteLocks();
+      showUpdateMessage();
+    } catch (error) {
+      console.log(error);
+    }
   }
+  setLoading(false);
 };
