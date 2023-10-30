@@ -10,7 +10,6 @@ const editMap = (layers: any) => {
     const layer = layers[layerName];
     if (layer instanceof L.GeoJSON) {
       layer.eachLayer((marker) => {
-        //@ts-ignore
         if (marker instanceof L.Marker && marker.options.draggable !== undefined) {
           marker.options.draggable = true;
         }
@@ -27,7 +26,6 @@ export const exitEdit = (layers: any) => {
     const layer = layers[layerName];
     if (layer instanceof L.GeoJSON) {
       layer.eachLayer((marker) => {
-        //@ts-ignore
         if (marker instanceof L.Marker && marker.options.draggable !== undefined) {
           marker.options.draggable = false;
         }
@@ -62,7 +60,7 @@ export const updateEditedFeatures = (event: L.DragEndEvent) => {
   }
 };
 
-const saveEdits = () => {
+const saveEdits = async () => {
   if (tempEditedFeatures.length > 0) {
     try {
       updateFeatures(tempEditedFeatures);

@@ -7,6 +7,7 @@ import { JSONSchemaType } from 'ajv';
 import { State } from './state';
 import { NGISFeature } from './types/feature';
 import { showUpdateMessage } from './components/alerts/update';
+import { setLoading } from './util';
 import { showErrorMessage } from './components/alerts/error';
 
 export const getDatasets = async (): Promise<Dataset[]> => {
@@ -46,6 +47,7 @@ export const getAndLockFeature = async (localId: string): Promise<FeatureCollect
   );
   return response.data;
 };
+
 export const getAndLockFeatures = async (localIds: string[]): Promise<FeatureCollection> => {
   const localIdStrings = localIds.join(',');
   const response = await axios.get(
@@ -60,12 +62,14 @@ export const deleteLocks = async (): Promise<FeatureCollection> => {
   );
   return response.data;
 };
+
 export const lockDataset = async (): Promise<FeatureCollection> => {
   const response = await axios.get(
     `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&locking_type=user_lock`,
   );
   return response.data;
 };
+
 export const putFeature = async (
   feature: Feature,
   coordinates: Position | Position[] | Position[][],
@@ -99,6 +103,9 @@ export const putFeature = async (
 
 export const updateFeatures = async (features: NGISFeature[]) => {
   const localIdStrings = features.map((feature) => feature.properties!.identifikasjon.lokalId);
+
+  setLoading(true);
+
   const featuresWithUpdate = features.map((feature) => {
     return {
       type: 'Feature',
@@ -120,18 +127,29 @@ export const updateFeatures = async (features: NGISFeature[]) => {
   try {
     await getAndLockFeatures(localIdStrings);
     if (featuresWithUpdate.length > 0) {
-      const response = await axios.post(
-        `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&locking_type=user_lock`,
-        payload,
-        { headers: { 'Content-Type': 'application/json' } },
-      );
-      deleteLocks();
-      showUpdateMessage();
-      return response.data;
+      try {
+        const response = await axios.post(
+          `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&locking_type=user_lock`,
+          payload,
+          { headers: { 'Content-Type': 'application/json' } },
+        );
+        await deleteLocks();
+        showUpdateMessage();
+        setLoading(false);
+
+        return response.data;
+      } catch (error) {
+        console.log(error);
+        showErrorMessage();
+        await deleteLocks();
+        setLoading(false);
+      }
     }
   } catch (error) {
     console.log(error);
     showErrorMessage();
-    deleteLocks();
+    await deleteLocks();
+    setLoading(false);
   }
+  setLoading(false);
 };
