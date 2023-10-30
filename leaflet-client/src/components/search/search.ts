@@ -1,11 +1,15 @@
-import { OpenStreetMapProvider } from 'leaflet-geosearch';
-
-export const performSearch = async (query: string) => {
-  const provider = new OpenStreetMapProvider({
-    params: {
-      countrycodes: 'no',
-    },
+import { OpenStreetMapProvider, GeoSearchControl } from 'leaflet-geosearch';
+import 'leaflet-geosearch/dist/geosearch.css';
+import { map } from '../../main';
+const provider = new OpenStreetMapProvider({
+  params: {
+    countrycodes: 'no',
+  },
+});
+export const searchInit = () => {
+  //@ts-ignore
+  const searchControl = new GeoSearchControl({
+    provider: provider,
   });
-  const results = await provider.search({ query });
-  return results;
+  map.addControl(searchControl);
 };
