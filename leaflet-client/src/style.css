@@ -2,9 +2,6 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
   background-color: #ffffff;
 
   font-synthesis: none;
@@ -51,6 +48,7 @@ a:hover {
 }
 
 body {
+  margin: 0;
   display: flex;
   flex-flow: column;
   width: 100vh;
@@ -174,19 +172,18 @@ p {
 
 .container {
   z-index: 1000;
-  width: 100vw; /* Use viewport width to fill the entire screen */
-  height: 100vh; /* Use viewport height to fill the entire screen */
-  position: fixed; /* Use fixed positioning to keep it centered */
-  top: 0;
-  left: 0;
+  position: absolute; /* Use fixed positioning to keep it centered */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   justify-content: center;
   align-items: center;
   /*background-color: rgba(0, 0, 0, 0.5); /* Optional: Add a semi-transparent background overlay */
 }
 #loader {
-  width: 100%;
-  height: 100%;
+  width: 100px;
+  height: 100px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -194,8 +191,8 @@ p {
 }
 
 #loader img {
-  max-width: 20%;
-  max-height: 20%; /* Adjust the max-height as needed */
+  max-width: 100%;
+  max-height: 100%; /* Adjust the max-height as needed */
 }
 
 #loader p {
@@ -217,9 +214,6 @@ p {
   animation: spin 2s ease-in-out infinite; /* Adjust the duration and timing function as needed */
 }
 
-
-
-
 .default-button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -237,19 +231,6 @@ p {
 .default-button:focus,
 .default-button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  .default-button {
-    background-color: #f9f9f9;
-  }
 }
 
 table {
@@ -308,17 +289,32 @@ tr:nth-child(even) {
   text-align: center;
   margin: 5px;
 }
-.leaflet-bar {
-color: black;
+
+.leaflet-control-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 500px;
 }
-.leaflet-control-container{
-  right: 300px;
-}
-.leaflet-top.leaflet-left{
+
+.leaflet-top.leaflet-left {
   display: flex;
-  flex-direction: row; 
-  align-items: center; 
+  flex-direction: row;
+  align-items: center;
 }
-.leaflet-bar.leaflet-control.leaflet-control-geosearch.leaflet-geosearch-button.active:after {
+
+.leaflet-bar.leaflet-control.leaflet-control-geosearch.leaflet-geosearch-button.active::after {
+  content: '';
+}
+
+.leaflet-control-attribution.leaflet-control {
+  display: none;
+}
+
+.open.active::after {
+  content: '';
+}
+
+form.active::after {
   content: '';
 }

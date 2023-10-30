@@ -10,8 +10,7 @@ import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisCl
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
-import { searchInit } from './components/search/search.js';
-import 'leaflet-geosearch/dist/geosearch.css';
+import { renderSearch } from './components/search/search.js';
 
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
@@ -65,7 +64,13 @@ export const layers: Record<string, L.GeoJSON> = {};
 // update and delete already created layers
 const featuresMap: Record<string, Layer> = {};
 
-export const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
+export const map = L.map('map', { zoomControl: false }).setView(START_LOCATION, 15); // Creating the map object
+
+L.control
+  .zoom({
+    position: 'topright',
+  })
+  .addTo(map);
 
 const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
   ...MAP_OPTIONS,
@@ -128,10 +133,11 @@ map.on('zoomend', () => {
   }
 });
 L.control.layers(baseMaps).addTo(map).setPosition('topright');
-searchInit();
 
 depthWMS.bringToFront();
 symbolWMS.bringToFront();
+
+renderSearch();
 
 setLoading(true);
 const datasets = await getDatasets();
