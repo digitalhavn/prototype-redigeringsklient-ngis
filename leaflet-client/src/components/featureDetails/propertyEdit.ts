@@ -7,7 +7,7 @@ import { renderGeometry } from './geometryEdit';
 import { handleCancelButtonClick } from '.';
 import { NGISFeature } from '../../types/feature';
 import { IGNORED_PROPS, READ_ONLY_PROPS } from '../../config';
-import { findSchemaByTitle, getValidation } from '../../validation';
+import { findSchemaByTitle, getFeatureSchema } from '../../validation';
 
 const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement, responseField: HTMLDivElement) => {
   setLoading(true);
@@ -25,7 +25,7 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
     }
   }
 
-  const validate = getValidation(feature);
+  const { validate } = getFeatureSchema(feature.properties!.featuretype);
   validate && console.log(validate.schema);
   if (!validate || validate(feature)) {
     handleCancelButtonClick();

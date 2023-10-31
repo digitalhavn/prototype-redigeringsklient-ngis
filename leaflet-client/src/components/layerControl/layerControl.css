@@ -1,5 +1,6 @@
 .c-side-button {
   background-color: #335cff;
+  color: white;
   position: relative;
   margin: 10px 15%;
   font-size: medium;
@@ -128,11 +129,11 @@
   position: relative;
 }
 
-#add-object-button {
+#create-feature-button {
   border: none;
 }
 
-#add-object-button:hover {
+#create-feature-button:hover {
   background-color: #0033ff;
 }
 

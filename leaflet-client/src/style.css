@@ -216,7 +216,7 @@ p {
 
 .default-button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
@@ -249,7 +249,7 @@ tr:nth-child(even) {
   background-color: #dddddd;
 }
 
-#cancel {
+.cancel {
   position: absolute;
   background: white;
   color: black;
@@ -258,7 +258,7 @@ tr:nth-child(even) {
   font-weight: bold;
 }
 
-#cancel:hover {
+.cancel:hover {
   cursor: pointer;
 }
 
@@ -290,31 +290,23 @@ tr:nth-child(even) {
   margin: 5px;
 }
 
-.leaflet-control-container {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 500px;
+dialog {
+  border-radius: 0.25rem;
+  z-index: 1001;
+  overflow: auto;
+  background: white;
+  width: 800px;
+  height: 60%;
+  padding: 0;
+  border: none;
+  box-shadow:
+    rgba(0, 0, 0, 0.25) 0px 54px 55px,
+    rgba(0, 0, 0, 0.12) 0px -12px 30px,
+    rgba(0, 0, 0, 0.12) 0px 4px 6px,
+    rgba(0, 0, 0, 0.17) 0px 12px 13px,
+    rgba(0, 0, 0, 0.2) 0px -3px 5px;
 }
 
-.leaflet-top.leaflet-left {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.leaflet-bar.leaflet-control.leaflet-control-geosearch.leaflet-geosearch-button.active::after {
-  content: '';
-}
-
-.leaflet-control-attribution.leaflet-control {
-  display: none;
-}
-
-.open.active::after {
-  content: '';
-}
-
-form.active::after {
-  content: '';
+dialog::backdrop {
+  background-color: hsla(208, 11%, 31%, 0.5);
 }

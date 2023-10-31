@@ -14,6 +14,8 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@types/json-schema": "^7.0.13",
+    "@types/leaflet-draw": "^1.0.9",
     "@types/lodash": "^4.14.199",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
@@ -32,6 +34,8 @@
     "axios": "^1.5.0",
     "leaflet": "^1.9.4",
     "leaflet-geosearch": "^3.10.2",
+    "leaflet-draw": "^1.0.4",
+    "leaflet-draw-locales": "^1.2.3",
     "lodash": "^4.17.21"
   }
 }

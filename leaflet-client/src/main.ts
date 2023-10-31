@@ -1,18 +1,24 @@
 import './style.css';
+import L, { Layer, WMSOptions } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw';
+import 'leaflet-draw/dist/leaflet.draw.css';
 import './components/layerControl/layerControl.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
-import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
-import { onMarkerClick } from './components/featureDetails/index.js';
+import { onMarkerClick } from './components/featureDetails';
 import { findPath, setLoading } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
+import { renderCreateFeature } from './components/createFeature';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
 import { renderSearch } from './components/search/search.js';
+import drawLocales from 'leaflet-draw-locales';
 
-const addToOrCreateLayer = (feature: Feature) => {
+drawLocales('norwegian');
+
+export const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
     layers[objectType] = L.geoJson(undefined, {
@@ -169,3 +175,4 @@ export const fetchData = async () => {
 
 await fetchData();
 renderDatasetOptions();
+renderCreateFeature();
