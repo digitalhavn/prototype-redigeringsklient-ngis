@@ -1,10 +1,4 @@
-export const initMultiSelect = () => {
-  createMultiSelect();
-  checkboxStatusChange();
-  console.log('Init function has been run');
-};
-
-const checkboxStatusChange = () => {
+export const checkboxStatusChange = () => {
   const multiselect = document.getElementById('mySelectLabel');
   const multiselectOption = multiselect!.getElementsByTagName('option')[0];
 
@@ -32,7 +26,7 @@ const toggleCheckboxArea = () => {
   }
 };
 
-const createMultiSelect = () => {
+export const createMultiSelect = (parentElement: HTMLElement) => {
   const multiselectDiv = document.createElement('div');
   multiselectDiv.id = 'myMultiSelect';
   multiselectDiv.className = 'multiselect';
@@ -44,6 +38,7 @@ const createMultiSelect = () => {
     console.log('select label has been clicked');
     toggleCheckboxArea();
   };
+  console.log('mySelect label has been created');
 
   const select = document.createElement('select');
   select.className = 'form-select';
@@ -104,5 +99,5 @@ const createMultiSelect = () => {
   multiselectDiv.appendChild(selectLabel);
   multiselectDiv.appendChild(selectOptionsDiv);
 
-  document.getElementById('object-list')?.appendChild(multiselectDiv);
+  parentElement.append(multiselectDiv);
 };

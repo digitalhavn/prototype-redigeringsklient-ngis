@@ -8,6 +8,7 @@ import { handleCancelButtonClick } from '.';
 import { NGISFeature } from '../../types/feature';
 import { IGNORED_PROPS, READ_ONLY_PROPS } from '../../config';
 import { findSchemaByTitle, getValidation } from '../../validation';
+import { createMultiSelect } from '../multiselect/multiselect';
 
 const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement, responseField: HTMLDivElement) => {
   setLoading(true);
@@ -134,6 +135,7 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
     }
   }
 
+  createMultiSelect(form);
   contentDiv.append(form);
 
   if (feature.geometry.type !== 'Polygon') {
