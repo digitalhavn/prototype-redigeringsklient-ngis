@@ -5,8 +5,8 @@ import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATAS
 import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/index.js';
-import { findPath, setLoading } from './util.js';
-import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
+import { findPath, setLoading, convertLatLngBoundsToBoundingBox } from './util.js';
+import { getDataset, getDatasetFeatures, getDatasets, getSchema, getDatasetFeaturesWithBBox } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
@@ -111,7 +111,11 @@ const symbolWMS = L.tileLayer
   } as WMSOptions)
   .addTo(map);
 
-map.on('zoomend', () => {
+map.on('zoomend', async () => {
+  const bounds = map.getBounds();
+  const bbox = convertLatLngBoundsToBoundingBox(bounds);
+  await fetchData(bbox);
+
   const currentZoom = map.getZoom();
   if (currentZoom < 19) {
     map.addLayer(OpenStreetMap);
@@ -137,7 +141,7 @@ State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET
 
 const featureTypes: [string, string][] = [];
 
-export const fetchData = async () => {
+export const fetchData = async (bbox: number[]) => {
   setLoading(true);
 
   Object.keys(layers).forEach((key) => {
@@ -148,7 +152,7 @@ export const fetchData = async () => {
   State.setActiveDataset(await getDataset());
   State.setSchema(await getSchema());
 
-  const datasetFeatures = await getDatasetFeatures();
+  const datasetFeatures = await getDatasetFeaturesWithBBox(bbox);
   datasetFeatures.features.forEach((feature) => {
     featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
     addToOrCreateLayer(feature);
@@ -157,6 +161,7 @@ export const fetchData = async () => {
 
   setLoading(false);
 };
-
-await fetchData();
+const bounds = map.getBounds();
+const bbox = convertLatLngBoundsToBoundingBox(bounds);
+await fetchData(bbox);
 renderDatasetOptions();

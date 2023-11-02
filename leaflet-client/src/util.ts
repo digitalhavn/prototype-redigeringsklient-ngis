@@ -58,3 +58,14 @@ export const setLoading = (isLoading: boolean) => {
   const loader = document.getElementById('loading-container')!;
   loader.style.display = isLoading ? 'block' : 'none';
 };
+export const convertLatLngBoundsToBoundingBox = (latLngBounds: L.LatLngBounds) => {
+  const southWest = latLngBounds.getSouthWest();
+  const northEast = latLngBounds.getNorthEast();
+
+  const minLongitude = southWest.lng;
+  const minLatitude = southWest.lat;
+  const maxLongitude = northEast.lng;
+  const maxLatitude = northEast.lat;
+
+  return [minLatitude, minLongitude, maxLatitude, maxLongitude];
+};
