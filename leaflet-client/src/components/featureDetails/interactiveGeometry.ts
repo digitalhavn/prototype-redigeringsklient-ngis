@@ -4,7 +4,9 @@ import { cloneDeep } from 'lodash';
 import { NGISFeature } from '../../types/feature';
 import { updateFeatures } from '../../ngisClient';
 import { layers } from '../../main';
-
+import { showErrorMessage } from '../alerts/error';
+import { setLoading } from '../../util';
+import { showUpdateMessage } from '../alerts/update';
 const editMap = (layers: any) => {
   Object.keys(layers).forEach((layerName: any) => {
     const layer = layers[layerName];
@@ -61,16 +63,21 @@ export const updateEditedFeatures = (event: L.DragEndEvent) => {
 };
 
 const saveEdits = async () => {
+  setLoading(true);
   if (tempEditedFeatures.length > 0) {
     try {
-      updateFeatures(tempEditedFeatures);
+      await updateFeatures(tempEditedFeatures);
       originalFeatures.length = 0;
       tempEditedFeatures.length = 0;
     } catch (error) {
       console.error('Error updating features:', error);
+      setLoading(false);
+      showErrorMessage();
       discardEdits();
     }
   }
+  setLoading(false);
+  showUpdateMessage();
 };
 
 export const discardEdits = () => {

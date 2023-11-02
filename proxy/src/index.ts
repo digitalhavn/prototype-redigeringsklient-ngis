@@ -69,10 +69,6 @@ app.get('/datasets/:datasetId/schema', (req, res, next) => {
   proxy(req, res, next);
 });
 
-app.delete('/datasets/:datasetId/locks', (req, res, next) => {
-  proxy(req, res, next);
-});
-
 app.listen(PORT, () => {
   console.log(`Server is listening at http://localhost:${PORT}`);
 });
