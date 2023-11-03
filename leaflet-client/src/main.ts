@@ -1,18 +1,26 @@
 import './style.css';
+import L, { Layer, WMSOptions } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw';
+import 'leaflet-draw/dist/leaflet.draw.css';
 import './components/layerControl/layerControl.css';
 import './components/header/header.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
-import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
-import { onMarkerClick } from './components/featureDetails/index.js';
+import { onMarkerClick } from './components/featureDetails';
 import { findPath, setLoading } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header/header.js';
+import { renderCreateFeature } from './components/createFeature';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
+import { renderSearch } from './components/search/search.js';
+import drawLocales from 'leaflet-draw-locales';
 import { updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
-const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = false) => {
+
+drawLocales('norwegian');
+
+export const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = false) => {
   feature.properties!.draggable = makeDraggable;
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
@@ -70,7 +78,13 @@ export const layers: Record<string, L.GeoJSON> = {};
 // update and delete already created layers
 const featuresMap: Record<string, Layer> = {};
 
-export const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
+export const map = L.map('map', { zoomControl: false }).setView(START_LOCATION, 15); // Creating the map object
+
+L.control
+  .zoom({
+    position: 'topright',
+  })
+  .addTo(map);
 
 const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
   ...MAP_OPTIONS,
@@ -132,10 +146,12 @@ map.on('zoomend', () => {
     symbolWMS.bringToFront();
   }
 });
+L.control.layers(baseMaps).addTo(map).setPosition('topright');
 
-L.control.layers(baseMaps).addTo(map);
 depthWMS.bringToFront();
 symbolWMS.bringToFront();
+
+renderSearch();
 
 setLoading(true);
 const datasets = await getDatasets();
@@ -167,3 +183,4 @@ export const fetchData = async () => {
 
 await fetchData();
 renderDatasetOptions();
+renderCreateFeature();

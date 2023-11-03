@@ -7,6 +7,7 @@ import { layers } from '../../main';
 import { showErrorMessage } from '../alerts/error';
 import { setLoading } from '../../util';
 import { showUpdateMessage } from '../alerts/update';
+
 const editMap = (layers: any) => {
   Object.keys(layers).forEach((layerName: any) => {
     const layer = layers[layerName];
@@ -23,6 +24,7 @@ const editMap = (layers: any) => {
     }
   });
 };
+
 export const exitEdit = (layers: any) => {
   Object.keys(layers).forEach((layerName: any) => {
     const layer = layers[layerName];
@@ -63,21 +65,20 @@ export const updateEditedFeatures = (event: L.DragEndEvent) => {
 };
 
 const saveEdits = async () => {
-  setLoading(true);
   if (tempEditedFeatures.length > 0) {
+    setLoading(true);
     try {
       await updateFeatures(tempEditedFeatures);
+      showUpdateMessage();
       originalFeatures.length = 0;
       tempEditedFeatures.length = 0;
     } catch (error) {
       console.error('Error updating features:', error);
-      setLoading(false);
       showErrorMessage();
       discardEdits();
     }
+    setLoading(false);
   }
-  setLoading(false);
-  showUpdateMessage();
 };
 
 export const discardEdits = () => {
@@ -93,6 +94,7 @@ export const discardEdits = () => {
 export const saveChangesButton = document.getElementById('saveChanges');
 export const editMapButton = document.getElementById('editMap');
 export const discardChangesButton = document.getElementById('discardChanges');
+
 editMapButton!.addEventListener('click', () => {
   editMapButton!.style.display = 'none';
   saveChangesButton!.style.display = 'block';
@@ -107,6 +109,7 @@ saveChangesButton!.addEventListener('click', () => {
   editMapButton!.style.display = 'block';
   exitEdit(layers);
 });
+
 discardChangesButton!.addEventListener('click', () => {
   saveChangesButton!.style.display = 'none';
   discardChangesButton!.style.display = 'none';

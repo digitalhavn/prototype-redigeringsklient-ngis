@@ -15,7 +15,7 @@ export const onMarkerClick = (e: { target: { feature: NGISFeature } }) => {
   const cancelButton = document.createElement('button');
   cancelButton.textContent = 'X';
   cancelButton.type = 'button';
-  cancelButton.id = 'cancel';
+  cancelButton.className = 'cancel';
 
   cancelButton.addEventListener('click', handleCancelButtonClick);
 
