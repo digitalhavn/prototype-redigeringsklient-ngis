@@ -5,12 +5,11 @@ import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATAS
 import L, { Layer, WMSOptions } from 'leaflet';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/index.js';
-import { findPath, setLoading, convertLatLngBoundsToBoundingBox } from './util.js';
+import { addConstant, findPath, setLoading, showVisibleFeatures } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema, getDatasetFeaturesWithBBox } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
-
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
@@ -110,11 +109,14 @@ const symbolWMS = L.tileLayer
     crossOrigin: true,
   } as WMSOptions)
   .addTo(map);
+let previousZoomLevel = map.getZoom();
 
 map.on('zoomend', async () => {
-  const bounds = map.getBounds();
-  const bbox = convertLatLngBoundsToBoundingBox(bounds);
-  await fetchData(bbox);
+  const currentZoomLevel = map.getZoom();
+  if (currentZoomLevel < previousZoomLevel) {
+    await showVisibleFeatures(map.getBounds());
+  }
+  previousZoomLevel = currentZoomLevel;
 
   const currentZoom = map.getZoom();
   if (currentZoom < 19) {
@@ -129,7 +131,9 @@ map.on('zoomend', async () => {
     symbolWMS.bringToFront();
   }
 });
-
+map.on('dragend', async () => {
+  await showVisibleFeatures(map.getBounds(), map.getZoom());
+});
 L.control.layers(baseMaps).addTo(map);
 depthWMS.bringToFront();
 symbolWMS.bringToFront();
@@ -143,7 +147,6 @@ const featureTypes: [string, string][] = [];
 
 export const fetchData = async (bbox: number[]) => {
   setLoading(true);
-
   Object.keys(layers).forEach((key) => {
     featureTypes.splice(0, featureTypes.length);
     layers[key].clearLayers();
@@ -151,8 +154,13 @@ export const fetchData = async (bbox: number[]) => {
 
   State.setActiveDataset(await getDataset());
   State.setSchema(await getSchema());
-
-  const datasetFeatures = await getDatasetFeaturesWithBBox(bbox);
+  let datasetFeatures;
+  try {
+    const modifiedBbox = addConstant(bbox, map.getZoom());
+    datasetFeatures = await getDatasetFeaturesWithBBox(modifiedBbox);
+  } catch (error) {
+    datasetFeatures = await getDatasetFeatures();
+  }
   datasetFeatures.features.forEach((feature) => {
     featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
     addToOrCreateLayer(feature);
@@ -161,7 +169,5 @@ export const fetchData = async (bbox: number[]) => {
 
   setLoading(false);
 };
-const bounds = map.getBounds();
-const bbox = convertLatLngBoundsToBoundingBox(bounds);
-await fetchData(bbox);
-renderDatasetOptions();
+await showVisibleFeatures(map.getBounds(), map.getZoom());
+renderDatasetOptions(map.getBounds());
