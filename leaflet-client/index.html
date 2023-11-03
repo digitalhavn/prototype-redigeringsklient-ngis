@@ -13,6 +13,9 @@
   <header>
     <p>Havnedata klient</p>
     <select name="select-dataset" id="select-dataset" style="display: none;"></select>
+    <button id="saveChanges">Lagre endringer</button>
+    <button id="discardChanges">Angre endringer</button>
+    <button id="editMap">Rediger kart</button>
   </header>
 
   <div class="container" id="loading-container">
@@ -22,7 +25,11 @@
   </div>
 
   <div id="updateMessage" class="update-message">
-    <span class="checkmark">&#10004;</span> Update Successful
+    <span class="checkmark">&#10004;</span> Endringer lagret
+  </div>
+
+  <div id="errorMessage" class="error-message">
+    <span class="error"></span> Noe gikk galt
   </div>
 
   <div id="object-list">
@@ -33,6 +40,7 @@
     <div id="area-content" class="c-collapsible-content"></div>
     <script src="\src\components\layerControl\collapsibleDiv.ts"></script>
     <button id="reset-map-button" class="c-side-button">Tilbakestill kart</button>
+  </div>
   </div>
 
   <dialog data-modal class="modal">

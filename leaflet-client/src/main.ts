@@ -4,30 +4,29 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import './components/layerControl/layerControl.css';
+import './components/header/header.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails';
 import { findPath, setLoading } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
-import { renderDatasetOptions } from './components/header.js';
+import { renderDatasetOptions } from './components/header/header.js';
 import { renderCreateFeature } from './components/createFeature';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
 import { renderSearch } from './components/search/search.js';
 import drawLocales from 'leaflet-draw-locales';
+import { updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
 
 drawLocales('norwegian');
 
-export const addToOrCreateLayer = (feature: Feature) => {
+export const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = false) => {
+  feature.properties!.draggable = makeDraggable;
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
     layers[objectType] = L.geoJson(undefined, {
       style: () => {
         return GEO_JSON_STYLE_OPTIONS[feature.geometry.type];
-      },
-      onEachFeature: (feature, layer) => {
-        featuresMap[feature.properties.identifikasjon.lokalId] = layer;
-        layer.on('click', onMarkerClick);
       },
       pointToLayer: (feature) => {
         const path = findPath(feature);
@@ -36,7 +35,16 @@ export const addToOrCreateLayer = (feature: Feature) => {
           iconSize: [15, 15],
         });
         const [lng, lat] = feature.geometry.coordinates;
-        return L.marker([lng, lat], { icon: customIcon });
+        const marker = L.marker([lng, lat], { icon: customIcon, draggable: feature.properties!.draggable });
+        delete feature.properties!.draggable;
+        marker.on('dragend', (event) => {
+          updateEditedFeatures(event);
+        });
+        return marker;
+      },
+      onEachFeature: (feature: Feature, layer: L.Layer) => {
+        featuresMap[feature.properties!.identifikasjon.lokalId] = layer;
+        layer.on('click', onMarkerClick);
       },
       coordsToLatLng: (coords) => {
         return L.latLng(coords);
@@ -46,9 +54,9 @@ export const addToOrCreateLayer = (feature: Feature) => {
   layers[objectType].addData(feature);
 };
 
-export const updateLayer = (updatedFeature: Feature) => {
+export const updateLayer = (updatedFeature: Feature, makeDraggable: boolean = false) => {
   deleteLayer(updatedFeature);
-  addToOrCreateLayer(updatedFeature);
+  addToOrCreateLayer(updatedFeature, makeDraggable);
 };
 
 export const deleteLayer = (deletedFeature: Feature) => {

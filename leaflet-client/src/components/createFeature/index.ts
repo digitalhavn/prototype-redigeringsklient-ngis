@@ -24,18 +24,6 @@ export const renderCreateFeature = () => {
     handleOpenCreateFeatureModal();
   };
 
-  modal.addEventListener('click', (e) => {
-    const dialogBounds = modal.getBoundingClientRect();
-    if (
-      e.clientX < dialogBounds.left ||
-      e.clientX > dialogBounds.right ||
-      e.clientY < dialogBounds.top ||
-      e.clientY > dialogBounds.bottom
-    ) {
-      modal.close();
-    }
-  });
-
   const cancelButton = document.querySelector('#close-modal-button') as HTMLButtonElement;
   cancelButton.onclick = () => modal.close();
 };
@@ -101,14 +89,14 @@ const handleSubmit = async () => {
     }
   });
 
-  const geometryType = getGeometryType(newFeature.properties.featuretype);
-  newFeature.geometry.type = geometryType;
-
   const path = findPath(newFeature);
   const customIcon = L.icon({
     iconUrl: `/havnesymboler/${path}`,
     iconSize: [15, 15],
   });
+
+  const geometryType = getGeometryType(newFeature.properties.featuretype);
+  newFeature.geometry.type = geometryType;
 
   // Start draw
   if (geometryType === 'Point') {
@@ -117,8 +105,13 @@ const handleSubmit = async () => {
     new L.Draw.Polyline(map).enable();
   }
 
+  let i = 0;
+
   // When marker is placed or line is drawn, create new feature
   map.on(L.Draw.Event.CREATED, async ({ layer }) => {
+    i++;
+    // Should only print 1
+    console.log(i);
     const coordinates =
       geometryType === 'Point'
         ? [layer._latlng.lat, layer._latlng.lng, 0]
@@ -131,6 +124,8 @@ const handleSubmit = async () => {
 
       if (editFeaturesSummary.features_created > 0) {
         showUpdateMessage();
+        (document.querySelector('[name="feature-type"]') as HTMLSelectElement).value = '';
+        (document.querySelector('#choose-feature-properties') as HTMLDivElement).innerHTML = '';
         await fetchData();
       }
     } catch (error) {
