@@ -4,9 +4,8 @@ import { cloneDeep } from 'lodash';
 import { NGISFeature } from '../../types/feature';
 import { updateFeatures } from '../../ngisClient';
 import { layers } from '../../main';
-import { showErrorMessage } from '../alerts/error';
 import { setLoading } from '../../util';
-import { showUpdateMessage } from '../alerts/update';
+import { showSuccessMessage, showErrorMessage } from '../alerts/alerts';
 
 const editMap = (layers: any) => {
   Object.keys(layers).forEach((layerName: any) => {
@@ -69,12 +68,11 @@ const saveEdits = async () => {
     setLoading(true);
     try {
       await updateFeatures(tempEditedFeatures);
-      showUpdateMessage();
+      showSuccessMessage();
       originalFeatures.length = 0;
       tempEditedFeatures.length = 0;
     } catch (error) {
-      console.error('Error updating features:', error);
-      showErrorMessage();
+      showErrorMessage(error);
       discardEdits();
     }
     setLoading(false);

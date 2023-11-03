@@ -1,11 +1,13 @@
 import { Feature, FeatureCollection, GeoJsonProperties, Position } from 'geojson';
-import { NGIS_PROXY_URL } from './config';
+import { DEFAULT_HTTP_TIMEOUT, NGIS_PROXY_URL } from './config';
 import { Dataset } from './types/dataset';
 import axios from 'axios';
 import { EditFeaturesSummary } from './types/editFeaturesSummary';
 import { JSONSchemaType } from 'ajv';
 import { State } from './state';
 import { NGISFeature } from './types/feature';
+
+axios.defaults.timeout = DEFAULT_HTTP_TIMEOUT;
 
 export const getDatasets = async (): Promise<Dataset[]> => {
   const response = await axios.get(`${NGIS_PROXY_URL}/datasets`);
@@ -49,13 +51,6 @@ export const getAndLockFeatures = async (localIds: string[]): Promise<FeatureCol
   const localIdStrings = localIds.join(',');
   const response = await axios.get(
     `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?query=in(*/identifikasjon/lokalid,${localIdStrings})&crs_EPSG=4258&locking_type=user_lock`,
-  );
-  return response.data;
-};
-
-export const lockDataset = async (): Promise<FeatureCollection> => {
-  const response = await axios.get(
-    `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&locking_type=user_lock`,
   );
   return response.data;
 };

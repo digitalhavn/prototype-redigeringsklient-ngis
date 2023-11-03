@@ -2,12 +2,12 @@ import { deleteLayer } from '../../main';
 import { getAndLockFeature, putFeature, updateFeatureProperties } from '../../ngisClient';
 import cloneDeep from 'lodash/cloneDeep';
 import { setLoading } from '../../util';
-import { showUpdateMessage } from '../alerts/update';
 import { renderGeometry } from './geometryEdit';
 import { handleCancelButtonClick } from '.';
 import { NGISFeature } from '../../types/feature';
 import { IGNORED_PROPS, READ_ONLY_PROPS } from '../../config';
 import { findSchemaByTitle, getFeatureSchema } from '../../validation';
+import { showErrorMessage, showSuccessMessage } from '../alerts/alerts';
 
 const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement, responseField: HTMLDivElement) => {
   setLoading(true);
@@ -28,10 +28,12 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
   const { validate } = getFeatureSchema(feature.properties!.featuretype);
   validate && console.log(validate.schema);
   if (!validate || validate(feature)) {
-    handleCancelButtonClick();
-    console.log('Data is valid');
-    await updateFeatureProperties(feature.properties);
-    showUpdateMessage();
+    try {
+      await updateFeatureProperties(feature.properties);
+      showSuccessMessage();
+    } catch (error) {
+      showErrorMessage(error);
+    }
   } else {
     console.log('Validation errors: ', validate.errors);
     const errorMessages = validate
@@ -46,7 +48,7 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
       .join(', ');
     responseField.style.color = 'red'; // Set text color to red
     responseField.textContent = `Validation errors: ${errorMessages}`;
-    feature = featureCopy;
+    feature.properties = featureCopy.properties;
   }
   setLoading(false);
 };
@@ -54,17 +56,16 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
 const handleDeleteButtonClick = async (feature: NGISFeature) => {
   setLoading(true);
 
-  await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
+  try {
+    await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
+    await putFeature(feature, feature.geometry.coordinates, 'Erase');
 
-  const saveResponse = await putFeature(feature, feature.geometry.coordinates, 'Erase');
-
-  if (saveResponse.features_erased > 0) {
     deleteLayer(feature);
     handleCancelButtonClick();
-    console.info('Feature was deleted');
-  } else {
-    console.error('Feature was not deleted');
+  } catch (error) {
+    showErrorMessage(error);
   }
+
   setLoading(false);
 };
 

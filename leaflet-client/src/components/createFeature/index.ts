@@ -3,7 +3,7 @@ import { NGISFeature } from '../../types/feature';
 import { findPath, getPropertyInput, setLoading } from '../../util';
 import { getFeatureSchema, getGeometryType, getPossibleFeatureTypes } from '../../validation';
 import { JSONSchema4 } from 'json-schema';
-import { showUpdateMessage } from '../alerts/update';
+import { showErrorMessage, showSuccessMessage } from '../alerts/alerts';
 import { fetchData, map } from '../../main';
 import L from 'leaflet';
 
@@ -123,14 +123,13 @@ const handleSubmit = async () => {
       const editFeaturesSummary = await putFeature(newFeature, coordinates, 'Create');
 
       if (editFeaturesSummary.features_created > 0) {
-        showUpdateMessage();
+        showSuccessMessage();
         (document.querySelector('[name="feature-type"]') as HTMLSelectElement).value = '';
         (document.querySelector('#choose-feature-properties') as HTMLDivElement).innerHTML = '';
         await fetchData();
       }
     } catch (error) {
-      // TODO: show error notification
-      console.log(error);
+      showErrorMessage(error);
     }
 
     setLoading(false);

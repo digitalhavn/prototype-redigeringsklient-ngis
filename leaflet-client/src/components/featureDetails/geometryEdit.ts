@@ -4,7 +4,7 @@ import { updateLayer } from '../../main';
 import { renderProperties } from './propertyEdit';
 import { NGISFeature } from '../../types/feature';
 import { setLoading } from '../../util';
-import { showUpdateMessage } from '../alerts/update';
+import { showErrorMessage, showSuccessMessage } from '../alerts/alerts';
 
 export const handleGeometryEdit = async (e: Event, feature: NGISFeature) => {
   setLoading(true);
@@ -24,15 +24,17 @@ export const handleGeometryEdit = async (e: Event, feature: NGISFeature) => {
 
   feature.geometry.type === 'Point' ? (editedGeometry = geometry[0]) : (editedGeometry = geometry);
 
-  await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
+  try {
+    await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
+    await putFeature(feature, editedGeometry, 'Replace');
+    feature.geometry.coordinates = editedGeometry;
 
-  const saveResponse = await putFeature(feature, editedGeometry, 'Replace');
-  feature.geometry.coordinates = editedGeometry;
-
-  if (saveResponse.features_replaced > 0) {
     updateLayer(feature);
-    showUpdateMessage();
+    showSuccessMessage();
+  } catch (error) {
+    showErrorMessage(error);
   }
+
   setLoading(false);
 };
 

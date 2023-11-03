@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Feature } from 'geojson';
 import { JSONSchema4 } from 'json-schema';
 
@@ -218,4 +219,16 @@ export const getPropertyInput = (
   const inputDiv = document.createElement('div');
   inputDiv.append(label, input);
   return inputDiv;
+};
+
+export const getErrorMessage = (error: unknown) => {
+  if (axios.isAxiosError(error)) {
+    if (error.code === 'ECONNABORTED') {
+      return 'Forespørselen ble avbrutt fordi det tok for lang tid...';
+    } else {
+      return 'hmmm....';
+    }
+  } else {
+    return JSON.stringify(error);
+  }
 };
