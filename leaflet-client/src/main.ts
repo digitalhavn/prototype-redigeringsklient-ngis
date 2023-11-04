@@ -6,16 +6,10 @@ import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import './components/layerControl/layerControl.css';
 import './components/header/header.css';
-import {
-  START_LOCATION,
-  MAP_OPTIONS,
-  GEO_JSON_STYLE_OPTIONS,
-  NGIS_DEFAULT_DATASET,
-  TIMEOUT_WARNING,
-} from './config.js';
+import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails';
-import { findPath, setLoading } from './util.js';
+import { findPath, makeRequest } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header/header.js';
@@ -24,7 +18,6 @@ import { generateLayerControl } from './components/layerControl/generateLayerCon
 import { renderSearch } from './components/search/search.js';
 import drawLocales from 'leaflet-draw-locales';
 import { updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
-import { showErrorMessage, showInfoMessage } from './components/alerts/alerts.js';
 
 drawLocales('norwegian');
 
@@ -163,31 +156,19 @@ renderSearch();
 
 const featureTypes: [string, string][] = [];
 
-setLoading(true);
-
-try {
-  setTimeout(() => {
-    showInfoMessage('Forespørselen tar lengere tid enn forventet. Venligst vent...');
-  }, TIMEOUT_WARNING);
-
+await makeRequest(async () => {
   const datasets = await getDatasets();
   State.setDatasets(datasets);
   State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
-} catch (error) {
-  showErrorMessage(error);
-}
-
-setLoading(false);
+}, false);
 
 export const fetchData = async () => {
-  setLoading(true);
-
   Object.keys(layers).forEach((key) => {
     featureTypes.splice(0, featureTypes.length);
     layers[key].clearLayers();
   });
 
-  try {
+  await makeRequest(async () => {
     const [dataset, schema, datasetFeatures] = await Promise.all([getDataset(), getSchema(), getDatasetFeatures()]);
 
     State.setActiveDataset(dataset);
@@ -197,16 +178,13 @@ export const fetchData = async () => {
       featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
       addToOrCreateLayer(feature);
     });
-  } catch (error) {
-    showErrorMessage(error, 'Noe gikk galt med henting av data');
-  }
 
-  setLoading(false);
+    generateLayerControl(featureTypes);
+  }, false);
 };
 
 if (State.datasets.length > 0) {
   await fetchData();
-  generateLayerControl(featureTypes);
   renderDatasetOptions();
   renderCreateFeature();
 }

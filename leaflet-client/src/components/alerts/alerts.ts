@@ -1,11 +1,9 @@
 import { getErrorMessage } from '../../util';
 
 export const showErrorMessage = (error: unknown, defaultMessage?: string) => {
-  console.log(error);
-
   const alert = createAlert();
   alert.style.background = '#CC0000';
-  alert.append(defaultMessage ?? getErrorMessage(error));
+  defaultMessage ? alert.append(defaultMessage) : alert.append(...getErrorMessage(error));
 };
 
 export const showInfoMessage = (message: string) => {
@@ -15,16 +13,15 @@ export const showInfoMessage = (message: string) => {
 };
 
 export const showSuccessMessage = (message: string = 'Endringer lagret') => {
-  const alert = createAlert();
-
   const checkmark = document.createElement('span');
   checkmark.innerHTML = '&#10004;';
 
+  const alert = createAlert();
   alert.style.background = '#4BB543';
   alert.append(checkmark, message);
 };
 
-const createAlert = () => {
+export const createAlert = () => {
   const alert = document.createElement('div');
   alert.className = 'alert';
   alert.classList.add('show');

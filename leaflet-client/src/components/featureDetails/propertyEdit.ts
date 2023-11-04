@@ -1,16 +1,14 @@
 import { deleteLayer } from '../../main';
 import { getAndLockFeature, putFeature, updateFeatureProperties } from '../../ngisClient';
 import cloneDeep from 'lodash/cloneDeep';
-import { setLoading } from '../../util';
 import { renderGeometry } from './geometryEdit';
 import { handleCancelButtonClick } from '.';
 import { NGISFeature } from '../../types/feature';
 import { IGNORED_PROPS, READ_ONLY_PROPS } from '../../config';
 import { findSchemaByTitle, getFeatureSchema } from '../../validation';
-import { showErrorMessage, showSuccessMessage } from '../alerts/alerts';
+import { makeRequest } from '../../util';
 
 const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement, responseField: HTMLDivElement) => {
-  setLoading(true);
   const featureCopy = cloneDeep(feature);
 
   const featureProperties = feature.properties;
@@ -28,12 +26,9 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
   const { validate } = getFeatureSchema(feature.properties!.featuretype);
   validate && console.log(validate.schema);
   if (!validate || validate(feature)) {
-    try {
+    await makeRequest(async () => {
       await updateFeatureProperties(feature.properties);
-      showSuccessMessage();
-    } catch (error) {
-      showErrorMessage(error);
-    }
+    });
   } else {
     console.log('Validation errors: ', validate.errors);
     const errorMessages = validate
@@ -50,23 +45,16 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
     responseField.textContent = `Validation errors: ${errorMessages}`;
     feature.properties = featureCopy.properties;
   }
-  setLoading(false);
 };
 
 const handleDeleteButtonClick = async (feature: NGISFeature) => {
-  setLoading(true);
-
-  try {
+  await makeRequest(async () => {
     await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
     await putFeature(feature, feature.geometry.coordinates, 'Erase');
 
     deleteLayer(feature);
     handleCancelButtonClick();
-  } catch (error) {
-    showErrorMessage(error);
-  }
-
-  setLoading(false);
+  });
 };
 
 export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElement) => {

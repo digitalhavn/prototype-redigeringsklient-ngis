@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { Feature } from 'geojson';
 import { JSONSchema4 } from 'json-schema';
+import { showErrorMessage, showInfoMessage, showSuccessMessage } from './components/alerts/alerts';
+import { TIMEOUT_WARNING } from './config';
 
 export const findPath = (feature: Feature) => {
   const { featuretype } = feature.properties!;
@@ -221,14 +223,51 @@ export const getPropertyInput = (
   return inputDiv;
 };
 
-export const getErrorMessage = (error: unknown) => {
+export const getErrorMessage = (error: unknown): (string | Node)[] => {
   if (axios.isAxiosError(error)) {
-    if (error.code === 'ECONNABORTED') {
-      return 'Forespørselen ble avbrutt fordi det tok for lang tid...';
+    const { code, response } = error;
+    if (code === 'ECONNABORTED') {
+      return ['Forespørselen ble avbrutt fordi det tok for lang tid...'];
+    } else if (response?.status === axios.HttpStatusCode.BadRequest) {
+      console.error(response.data);
+      const { errors, title }: { errors: { lokalid: string; reason: string }[]; title: string } = response.data;
+      const errorMessage: (string | HTMLElement)[] = [`${title}:`];
+      errors.forEach(({ lokalid, reason }) => {
+        const newError = document.createElement('div');
+        newError.textContent = `lokalid ${lokalid.slice(0, 7)}... - ${reason}`;
+        errorMessage.push(newError);
+      });
+      return errorMessage;
+    } else if (response?.status && response.status >= axios.HttpStatusCode.InternalServerError) {
+      return [`${response.status}: Noe gikk galt med tjeneren. Prøv på nytt senere...`];
     } else {
-      return 'hmmm....';
+      return ['Noe gikk galt...'];
     }
   } else {
-    return JSON.stringify(error);
+    return [JSON.stringify(error)];
   }
+};
+
+export const makeRequest = async (
+  request: () => Promise<any>,
+  showSuccess: boolean = true,
+  onError?: () => void,
+  successMessage?: string,
+  errorMessage?: string,
+) => {
+  setLoading(true);
+  const timeoutWarningID = setTimeout(() => {
+    showInfoMessage('Forespørselen tar lengere tid enn forventet. Venligst vent...');
+  }, TIMEOUT_WARNING);
+
+  try {
+    await request();
+    showSuccess && showSuccessMessage(successMessage);
+  } catch (error) {
+    showErrorMessage(error, errorMessage);
+    onError?.();
+  }
+
+  clearTimeout(timeoutWarningID);
+  setLoading(false);
 };

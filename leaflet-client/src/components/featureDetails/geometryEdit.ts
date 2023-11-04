@@ -3,11 +3,9 @@ import { getAndLockFeature, putFeature } from '../../ngisClient';
 import { updateLayer } from '../../main';
 import { renderProperties } from './propertyEdit';
 import { NGISFeature } from '../../types/feature';
-import { setLoading } from '../../util';
-import { showErrorMessage, showSuccessMessage } from '../alerts/alerts';
+import { makeRequest } from '../../util';
 
 export const handleGeometryEdit = async (e: Event, feature: NGISFeature) => {
-  setLoading(true);
   e.preventDefault();
 
   const geometry: Position[] = [];
@@ -24,18 +22,13 @@ export const handleGeometryEdit = async (e: Event, feature: NGISFeature) => {
 
   feature.geometry.type === 'Point' ? (editedGeometry = geometry[0]) : (editedGeometry = geometry);
 
-  try {
+  await makeRequest(async () => {
     await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
     await putFeature(feature, editedGeometry, 'Replace');
     feature.geometry.coordinates = editedGeometry;
 
     updateLayer(feature);
-    showSuccessMessage();
-  } catch (error) {
-    showErrorMessage(error);
-  }
-
-  setLoading(false);
+  });
 };
 
 export const renderGeometry = (feature: NGISFeature, contentDiv: HTMLDivElement) => {
