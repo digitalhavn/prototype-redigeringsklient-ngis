@@ -1,6 +1,8 @@
-import { Dataset } from '../types/dataset';
+import { vi } from 'vitest';
 
-export const datasetMock: Dataset = {
-  id: '',
-  name: 'test',
+export const mockRequest = (shouldResolve = true, timeout = 1000): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    setTimeout(shouldResolve ? resolve : reject, timeout);
+    vi.advanceTimersByTime(timeout);
+  });
 };

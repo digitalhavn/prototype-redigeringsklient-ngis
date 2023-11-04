@@ -4,6 +4,12 @@ import { JSONSchema4 } from 'json-schema';
 import { showErrorMessage, showInfoMessage, showSuccessMessage } from './components/alerts/alerts';
 import { TIMEOUT_WARNING } from './config';
 
+/**
+ * Find path to custom marker icon based on feature type and status.
+ *
+ * @param feature - feature to get custom icon from
+ * @returns path to custom icon as a string
+ */
 export const findPath = (feature: Feature) => {
   const { featuretype } = feature.properties!;
   const basePath = `${featuretype}/${featuretype}`;
@@ -58,8 +64,13 @@ export const findPath = (feature: Feature) => {
   }
 };
 
+/**
+ * Toggle loading spinner
+ *
+ * @param isLoading - true = show spinner, false = hide spinner
+ */
 export const setLoading = (isLoading: boolean) => {
-  const loader = document.getElementById('loading-container')!;
+  const loader = document.querySelector('#loading-container') as HTMLDivElement;
   loader.style.display = isLoading ? 'block' : 'none';
 };
 
@@ -223,6 +234,12 @@ export const getPropertyInput = (
   return inputDiv;
 };
 
+/**
+ * Extract error message from a http error to display in the UI
+ *
+ * @param error - error response
+ * @returns list of strings or {@link HTMLElement} containing the error message
+ */
 export const getErrorMessage = (error: unknown): (string | Node)[] => {
   if (axios.isAxiosError(error)) {
     const { code, response } = error;
@@ -248,8 +265,18 @@ export const getErrorMessage = (error: unknown): (string | Node)[] => {
   }
 };
 
+/**
+ * Util function for handling loading, errors, and success for a request.
+ * Will also show a info toast if request takes longer than expected.
+ *
+ * @param request - request function
+ * @param showSuccess - whether or not a toast message should be shown when request completes successfully
+ * @param onError - function to run on error (in addition to error toast)
+ * @param successMessage - custom success message
+ * @param errorMessage - custom error message
+ */
 export const makeRequest = async (
-  request: () => Promise<any>,
+  request: () => Promise<void>,
   showSuccess: boolean = true,
   onError?: () => void,
   successMessage?: string,
@@ -257,7 +284,7 @@ export const makeRequest = async (
 ) => {
   setLoading(true);
   const timeoutWarningID = setTimeout(() => {
-    showInfoMessage('Forespørselen tar lengere tid enn forventet. Venligst vent...');
+    showInfoMessage('Forespørselen tar lengere tid enn forventet. Vennligst vent...');
   }, TIMEOUT_WARNING);
 
   try {
