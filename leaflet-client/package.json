@@ -1,7 +1,7 @@
 {
   "name": "leaflet-client",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -33,9 +33,9 @@
     "ajv": "^8.12.0",
     "axios": "^1.5.0",
     "leaflet": "^1.9.4",
-    "leaflet-geosearch": "^3.10.2",
     "leaflet-draw": "^1.0.4",
     "leaflet-draw-locales": "^1.2.3",
+    "leaflet-geosearch": "^3.10.2",
     "lodash": "^4.17.21"
   }
 }
