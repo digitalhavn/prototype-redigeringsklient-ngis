@@ -1,0 +1,57 @@
+#editMap {
+    z-index: 1000;
+    display: block;
+    background-color: #335cff;
+    position: relative;
+    margin: 10px 15px; 
+    font-size: 100%;
+    width: 200px;
+    height: 25px;
+    border-radius: 8px;
+    padding: 0px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.25s; 
+  }
+  
+  #editMap:hover {
+    background-color: #0033ff;
+  }
+  
+  #saveChanges{
+    z-index: 1000;
+    display: none;
+    background-color: #335cff;
+    margin: 10px 15px;
+    font-size: 100%;
+    width: 200px;
+    height: 25px;
+    border-radius: 8px;
+    padding: 0px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.25s;
+  }
+  #discardChanges{
+    z-index: 1000;
+    display: none;
+    background-color: rgb(255, 42, 42);
+    margin: 10px 0px;
+    font-size: 100%;
+    width: 200px;
+    height: 25px;
+    border-radius: 8px;
+    padding: 0px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.25s;
+  }
+  #saveChanges:hover {
+    background-color: #0033ff;
+  }
+  #discardChanges:hover {
+    background-color: #ff0000;
+  }
