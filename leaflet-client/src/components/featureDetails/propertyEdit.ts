@@ -1,4 +1,4 @@
-import { deleteLayer } from '../../main';
+import { deleteLayer, updateLayer } from '../../main';
 import { getAndLockFeature, putFeature, updateFeatureProperties } from '../../ngisClient';
 import cloneDeep from 'lodash/cloneDeep';
 import { renderGeometry } from './geometryEdit';
@@ -28,6 +28,7 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
   if (!validate || validate(feature)) {
     await makeRequest(async () => {
       await updateFeatureProperties(feature.properties);
+      updateLayer(feature);
     });
   } else {
     console.log('Validation errors: ', validate.errors);
