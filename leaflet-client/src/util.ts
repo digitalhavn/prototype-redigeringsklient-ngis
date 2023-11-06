@@ -1,5 +1,5 @@
 import { Feature } from 'geojson';
-import { fetchData } from './main';
+import L from 'leaflet';
 
 export const findPath = (feature: Feature) => {
   const { featuretype } = feature.properties!;
@@ -60,75 +60,47 @@ export const setLoading = (isLoading: boolean) => {
   loader.style.display = isLoading ? 'block' : 'none';
 };
 
-export const convertLatLngBoundsToBoundingBox = (latLngBounds: L.LatLngBounds) => {
-  const southWest = latLngBounds.getSouthWest();
-  const northEast = latLngBounds.getNorthEast();
-
-  const minLongitude = southWest.lng;
-  const minLatitude = southWest.lat;
-  const maxLongitude = northEast.lng;
-  const maxLatitude = northEast.lat;
-
-  return [minLatitude, minLongitude, maxLatitude, maxLongitude];
-};
-
-let previousBbox: number[];
-
-export const showVisibleFeatures = async (bounds: L.LatLngBounds, zoomLevel: number = 15) => {
-  const currentBbox = convertLatLngBoundsToBoundingBox(bounds);
-  if (previousBbox === undefined) {
-    previousBbox = currentBbox;
+export const isWithinBounds = (feature: Feature, latLngBounds: L.LatLngBounds) => {
+  const bufferPercentage = 20;
+  if (feature.geometry.type === 'Point') {
+    const { coordinates } = feature.geometry;
+    return latLngBounds.pad(bufferPercentage / 100).contains(L.latLng(coordinates[0], coordinates[1]));
+  } else if (feature.geometry.type === 'LineString' || feature.geometry.type === 'Polygon') {
+    const { coordinates } = feature.geometry;
+    for (const coord of coordinates) {
+      const lat = typeof coord === 'number' ? coord : (coord[1] as number);
+      const lng = typeof coord === 'number' ? coord : (coord[0] as number);
+      if (!latLngBounds.pad(bufferPercentage / 100).contains(L.latLng(lat, lng))) {
+        return false;
+      }
+    }
+    return true;
   }
-  const movementThreshold = findThreshold(zoomLevel);
-  if (calculateBoundingBoxDistance(previousBbox, currentBbox) > movementThreshold) {
-    await fetchData(currentBbox);
+  return false;
+};
 
-    previousBbox = currentBbox;
+//Code below is a lot cleaner but typescript complains
+/*
+export const isWithinBounds = (feature: Feature, latLngBounds: L.LatLngBounds) => {
+  if (feature.geometry.coordinates && ['Point', 'LineString', 'Polygon'].includes(feature.geometry.type)) {
+    const { coordinates } = feature.geometry;
+    switch (feature.geometry.type) {
+      case 'Point':
+        return latLngBounds.contains(L.latLng(coordinates[0], coordinates[1]));
+
+      case 'LineString':
+      case 'Polygon':
+        for (const coord of coordinates) {
+          if (!latLngBounds.contains(L.latLng(coord[1], coord[0]))) {
+            return false;
+          }
+        }
+        return true;
+
+      default:
+        return false;
+    }
   }
+  return false;
 };
-
-const calculateBoundingBoxDistance = (bbox1: number[], bbox2: number[]) => {
-  const center1 = [(bbox1[0] + bbox1[2]) / 2, (bbox1[1] + bbox1[3]) / 2];
-  const center2 = [(bbox2[0] + bbox2[2]) / 2, (bbox2[1] + bbox2[3]) / 2];
-
-  const dx = center1[0] - center2[0];
-  const dy = center1[1] - center2[1];
-  return Math.sqrt(dx * dx + dy * dy);
-};
-
-const findThreshold = (zoomLevel: number) => {
-  let maxThreshold: number;
-
-  switch (true) {
-    case zoomLevel >= 16 && zoomLevel < 18:
-      maxThreshold = 0.004;
-      break;
-    case zoomLevel >= 18:
-      maxThreshold = 0.002;
-      break;
-    case zoomLevel >= 13 && zoomLevel < 16:
-      maxThreshold = 0.015;
-      break;
-    default:
-      maxThreshold = 0.1;
-      break;
-  }
-
-  return maxThreshold;
-};
-export const addConstant = (bbox: number[], zoomLevel: number) => {
-  let constant: number;
-  switch (true) {
-    case zoomLevel >= 16 && zoomLevel < 18:
-      constant = 0.004;
-      break;
-    case zoomLevel >= 18:
-      constant = 0.002;
-      break;
-    default:
-      constant = 0.01;
-      break;
-  }
-  const modifiedBbox = bbox.map((value) => value + constant);
-  return modifiedBbox;
-};
+*/

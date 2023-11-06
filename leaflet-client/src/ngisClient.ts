@@ -23,13 +23,6 @@ export const getDatasetFeatures = async (): Promise<FeatureCollection> => {
   return response.data;
 };
 
-export const getDatasetFeaturesWithBBox = async (bbox: number[]): Promise<FeatureCollection> => {
-  const response = await axios.get(
-    `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&bbox=${bbox}&references=all`,
-  );
-  return response.data;
-};
-
 export const getSchema = async (): Promise<JSONSchemaType<any>> => {
   const response = await axios.get(`${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/schema`);
   return response.data;

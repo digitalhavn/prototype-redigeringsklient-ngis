@@ -1,9 +1,7 @@
-import { LatLngBounds } from 'leaflet';
-import { flyToActive } from '../main';
+import { fetchData, flyToActive } from '../main';
 import { State } from '../state';
-import { showVisibleFeatures } from '../util';
 
-export const renderDatasetOptions = (bbox: LatLngBounds) => {
+export const renderDatasetOptions = () => {
   const selectActiveDataset = document.querySelector('#select-dataset') as HTMLInputElement;
   selectActiveDataset.style.display = 'block';
   selectActiveDataset.innerHTML = '';
@@ -28,7 +26,7 @@ export const renderDatasetOptions = (bbox: LatLngBounds) => {
     objectList.style.display = 'block';
     State.activeDataset!.id = selectActiveDataset.value;
     selectActiveDataset.disabled = true;
-    await showVisibleFeatures(bbox);
+    await fetchData();
     selectActiveDataset.disabled = false;
     flyToActive();
   };

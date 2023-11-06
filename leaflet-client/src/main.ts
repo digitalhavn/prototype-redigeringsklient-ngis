@@ -3,13 +3,13 @@ import 'leaflet/dist/leaflet.css';
 import './components/layerControl/layerControl.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
 import L, { Layer, WMSOptions } from 'leaflet';
-import { Feature } from 'geojson';
+import { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/index.js';
-import { addConstant, findPath, setLoading, showVisibleFeatures } from './util.js';
-import { getDataset, getDatasetFeatures, getDatasets, getSchema, getDatasetFeaturesWithBBox } from './ngisClient.js';
+import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
+import { findPath, isWithinBounds, setLoading } from './util.js';
 const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
@@ -109,14 +109,9 @@ const symbolWMS = L.tileLayer
     crossOrigin: true,
   } as WMSOptions)
   .addTo(map);
-let previousZoomLevel = map.getZoom();
 
-map.on('zoomend', async () => {
-  const currentZoomLevel = map.getZoom();
-  if (currentZoomLevel < previousZoomLevel) {
-    await showVisibleFeatures(map.getBounds());
-  }
-  previousZoomLevel = currentZoomLevel;
+map.on('zoomend', () => {
+  showVisibleFeatures();
 
   const currentZoom = map.getZoom();
   if (currentZoom < 19) {
@@ -131,9 +126,7 @@ map.on('zoomend', async () => {
     symbolWMS.bringToFront();
   }
 });
-map.on('dragend', async () => {
-  await showVisibleFeatures(map.getBounds(), map.getZoom());
-});
+
 L.control.layers(baseMaps).addTo(map);
 depthWMS.bringToFront();
 symbolWMS.bringToFront();
@@ -142,10 +135,11 @@ setLoading(true);
 const datasets = await getDatasets();
 State.setDatasets(datasets);
 State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
+export const featureTypes: [string, string][] = [];
 
-const featureTypes: [string, string][] = [];
-
-export const fetchData = async (bbox: number[]) => {
+let datasetFeatures: FeatureCollection<Geometry, GeoJsonProperties>;
+const currentFeatures: Feature<Geometry, GeoJsonProperties>[] = [];
+export const fetchData = async () => {
   setLoading(true);
   Object.keys(layers).forEach((key) => {
     featureTypes.splice(0, featureTypes.length);
@@ -154,20 +148,37 @@ export const fetchData = async (bbox: number[]) => {
 
   State.setActiveDataset(await getDataset());
   State.setSchema(await getSchema());
-  let datasetFeatures;
-  try {
-    const modifiedBbox = addConstant(bbox, map.getZoom());
-    datasetFeatures = await getDatasetFeaturesWithBBox(modifiedBbox);
-  } catch (error) {
-    datasetFeatures = await getDatasetFeatures();
-  }
+
+  datasetFeatures = await getDatasetFeatures();
+
   datasetFeatures.features.forEach((feature) => {
-    featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
-    addToOrCreateLayer(feature);
+    if (isWithinBounds(feature, map.getBounds())) {
+      currentFeatures.push(feature);
+      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+      addToOrCreateLayer(feature);
+    }
   });
   generateLayerControl(featureTypes);
 
   setLoading(false);
 };
-await showVisibleFeatures(map.getBounds(), map.getZoom());
-renderDatasetOptions(map.getBounds());
+await fetchData();
+renderDatasetOptions();
+map.on('dragend', () => {
+  showVisibleFeatures();
+});
+export const showVisibleFeatures = () => {
+  featureTypes.length = 0;
+  currentFeatures.forEach((feature) => {
+    deleteLayer(feature);
+  });
+  currentFeatures.length = 0;
+  datasetFeatures.features.forEach((feature: Feature) => {
+    if (isWithinBounds(feature, map.getBounds())) {
+      currentFeatures.push(feature);
+      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+      addToOrCreateLayer(feature);
+    }
+  });
+  generateLayerControl(featureTypes);
+};
