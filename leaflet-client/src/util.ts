@@ -11,8 +11,12 @@ import { TIMEOUT_WARNING } from './config';
  * @returns path to custom icon as a string
  */
 export const findPath = (feature: Feature) => {
-  const { featuretype } = feature.properties!;
+  const { featuretype, status } = feature.properties!;
   const basePath = `${featuretype}/${featuretype}`;
+
+  if (status === 'ikkeIBruk') {
+    return 'ikke-i-bruk.png';
+  }
 
   switch (featuretype) {
     case 'Beredskapspunkt':
