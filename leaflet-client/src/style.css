@@ -286,3 +286,40 @@ dialog {
 dialog::backdrop {
   background-color: hsla(208, 11%, 31%, 0.5);
 }
+
+#confirm-deletion {
+  width: 350px;
+  height: 100px;
+  padding: 10px;
+}
+
+#confirm-deletion h3 {
+  font-size: 18px;
+}
+
+#confirm-deletion button {
+  border-radius: 8px;
+  border: 1px solid;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transform: translateX(85%);
+}
+
+#confirm-deletion-btn {
+  background-color: #ff0000;
+}
+
+#confirm-deletion-btn:hover {
+  background-color: #cc0000;
+}
+
+#close-deletion-btn {
+  background-color: #cccccc;
+}
+
+#close-deletion-btn:hover {
+  background-color: #aaaaaa;
+}
