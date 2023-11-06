@@ -49,13 +49,24 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
 };
 
 const handleDeleteButtonClick = async (feature: NGISFeature) => {
-  await makeRequest(async () => {
-    await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
-    await putFeature(feature, feature.geometry.coordinates, 'Erase');
+  const modal = document.querySelector('#confirm-deletion') as HTMLDialogElement;
+  const confirmButton = document.querySelector('#confirm-deletion-btn') as HTMLButtonElement;
+  const closeButton = document.querySelector('#close-deletion-btn') as HTMLButtonElement;
 
-    deleteLayer(feature);
-    handleCancelButtonClick();
-  });
+  modal.showModal();
+  closeButton.onclick = () => {
+    modal.close();
+  };
+  confirmButton.onclick = async () => {
+    modal.close();
+    await makeRequest(async () => {
+      await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
+      await putFeature(feature, feature.geometry.coordinates, 'Erase');
+
+      deleteLayer(feature);
+      handleCancelButtonClick();
+    });
+  };
 };
 
 export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElement) => {
