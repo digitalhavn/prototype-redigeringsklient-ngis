@@ -1,5 +1,7 @@
 import { Feature } from 'geojson';
 import L from 'leaflet';
+import { addToOrCreateLayer, currentFeatures, datasetFeatures, deleteLayer, featureTypes } from './main';
+import { generateLayerControl } from './components/layerControl/generateLayerControl';
 
 export const findPath = (feature: Feature) => {
   const { featuretype } = feature.properties!;
@@ -59,7 +61,21 @@ export const setLoading = (isLoading: boolean) => {
   const loader = document.getElementById('loading-container')!;
   loader.style.display = isLoading ? 'block' : 'none';
 };
-
+export const showVisibleFeatures = (bounds: L.LatLngBounds) => {
+  featureTypes.length = 0;
+  currentFeatures.forEach((feature) => {
+    deleteLayer(feature);
+  });
+  currentFeatures.length = 0;
+  datasetFeatures.features.forEach((feature: Feature) => {
+    if (isWithinBounds(feature, bounds)) {
+      currentFeatures.push(feature);
+      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+      addToOrCreateLayer(feature);
+    }
+  });
+  generateLayerControl(featureTypes);
+};
 export const isWithinBounds = (feature: Feature, latLngBounds: L.LatLngBounds) => {
   const bufferPercentage = 20;
   if (feature.geometry.type === 'Point') {

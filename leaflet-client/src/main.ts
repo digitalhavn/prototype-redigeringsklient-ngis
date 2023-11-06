@@ -9,8 +9,8 @@ import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisCl
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header.js';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
-import { findPath, isWithinBounds, setLoading } from './util.js';
-const addToOrCreateLayer = (feature: Feature) => {
+import { findPath, isWithinBounds, setLoading, showVisibleFeatures } from './util.js';
+export const addToOrCreateLayer = (feature: Feature) => {
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
     layers[objectType] = L.geoJson(undefined, {
@@ -111,7 +111,7 @@ const symbolWMS = L.tileLayer
   .addTo(map);
 
 map.on('zoomend', () => {
-  showVisibleFeatures();
+  showVisibleFeatures(map.getBounds());
 
   const currentZoom = map.getZoom();
   if (currentZoom < 19) {
@@ -137,8 +137,8 @@ State.setDatasets(datasets);
 State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
 export const featureTypes: [string, string][] = [];
 
-let datasetFeatures: FeatureCollection<Geometry, GeoJsonProperties>;
-const currentFeatures: Feature<Geometry, GeoJsonProperties>[] = [];
+export let datasetFeatures: FeatureCollection<Geometry, GeoJsonProperties>;
+export const currentFeatures: Feature<Geometry, GeoJsonProperties>[] = [];
 export const fetchData = async () => {
   setLoading(true);
   Object.keys(layers).forEach((key) => {
@@ -165,20 +165,5 @@ export const fetchData = async () => {
 await fetchData();
 renderDatasetOptions();
 map.on('dragend', () => {
-  showVisibleFeatures();
+  showVisibleFeatures(map.getBounds());
 });
-export const showVisibleFeatures = () => {
-  featureTypes.length = 0;
-  currentFeatures.forEach((feature) => {
-    deleteLayer(feature);
-  });
-  currentFeatures.length = 0;
-  datasetFeatures.features.forEach((feature: Feature) => {
-    if (isWithinBounds(feature, map.getBounds())) {
-      currentFeatures.push(feature);
-      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
-      addToOrCreateLayer(feature);
-    }
-  });
-  generateLayerControl(featureTypes);
-};
