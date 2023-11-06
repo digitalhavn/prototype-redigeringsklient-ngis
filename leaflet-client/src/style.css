@@ -144,43 +144,6 @@ p {
 #markerInfo .default-button:hover {
   background-color: #0056b3;
 }
-.update-message {
-  z-index: 1000;
-  display: none;
-  position: fixed;
-  top: 20px;
-  right: 55px;
-  background-color: #4caf50;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 5px;
-  opacity: 0;
-}
-.error-message {
-  z-index: 1000;
-  display: block;
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: red;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 5px;
-  opacity: 0;
-}
-.update-message.show, .error-message.show {
-  animation: fadeOut 2s ease-in-out forwards;
-}
-
-@keyframes fadeOut {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    display: none;
-  }
-}
 
 .container {
   z-index: 1000;
@@ -193,6 +156,7 @@ p {
   align-items: center;
   /*background-color: rgba(0, 0, 0, 0.5); /* Optional: Add a semi-transparent background overlay */
 }
+
 #loader {
   width: 100px;
   height: 100px;

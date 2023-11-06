@@ -1,4 +1,5 @@
 import './style.css';
+import './components/alerts/alerts.css';
 import L, { Layer, WMSOptions } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw';
@@ -8,7 +9,7 @@ import './components/header/header.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails';
-import { findPath, setLoading } from './util.js';
+import { findPath, makeRequest } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header/header.js';
@@ -153,34 +154,37 @@ symbolWMS.bringToFront();
 
 renderSearch();
 
-setLoading(true);
-const datasets = await getDatasets();
-State.setDatasets(datasets);
-State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
-
 const featureTypes: [string, string][] = [];
 
-export const fetchData = async () => {
-  setLoading(true);
+await makeRequest(async () => {
+  const datasets = await getDatasets();
+  State.setDatasets(datasets);
+  State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
+}, false);
 
+export const fetchData = async () => {
   Object.keys(layers).forEach((key) => {
     featureTypes.splice(0, featureTypes.length);
     layers[key].clearLayers();
   });
 
-  State.setActiveDataset(await getDataset());
-  State.setSchema(await getSchema());
+  await makeRequest(async () => {
+    const [dataset, schema, datasetFeatures] = await Promise.all([getDataset(), getSchema(), getDatasetFeatures()]);
 
-  const datasetFeatures = await getDatasetFeatures();
-  datasetFeatures.features.forEach((feature) => {
-    featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
-    addToOrCreateLayer(feature);
-  });
-  generateLayerControl(featureTypes);
+    State.setActiveDataset(dataset);
+    State.setSchema(schema);
 
-  setLoading(false);
+    datasetFeatures.features.forEach((feature) => {
+      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+      addToOrCreateLayer(feature);
+    });
+
+    generateLayerControl(featureTypes);
+  }, false);
 };
 
-await fetchData();
-renderDatasetOptions();
-renderCreateFeature();
+if (State.datasets.length > 0) {
+  await fetchData();
+  renderDatasetOptions();
+  renderCreateFeature();
+}
