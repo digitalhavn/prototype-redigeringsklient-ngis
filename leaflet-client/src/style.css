@@ -2,9 +2,6 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
   background-color: #ffffff;
 
   font-synthesis: none;
@@ -74,12 +71,14 @@ p {
 }
 
 #map {
+  z-index: 1;
   position: absolute;
   top: 3.5rem;
   bottom: 0;
   width: 75%;
   height: 90vh;
   margin-left: 25%;
+  margin-top: 5px;
 }
 
 #markerInfo {
@@ -147,17 +146,29 @@ p {
 }
 .update-message {
   z-index: 1000;
-  display: block;
+  display: none;
   position: fixed;
   top: 20px;
-  right: 20px;
+  right: 55px;
   background-color: #4caf50;
   color: #fff;
   padding: 10px 20px;
   border-radius: 5px;
   opacity: 0;
 }
-.update-message.show {
+.error-message {
+  z-index: 1000;
+  display: block;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: red;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  opacity: 0;
+}
+.update-message.show, .error-message.show {
   animation: fadeOut 2s ease-in-out forwards;
 }
 
@@ -173,19 +184,18 @@ p {
 
 .container {
   z-index: 1000;
-  width: 100vw; /* Use viewport width to fill the entire screen */
-  height: 100vh; /* Use viewport height to fill the entire screen */
-  position: fixed; /* Use fixed positioning to keep it centered */
-  top: 0;
-  left: 0;
+  position: absolute; /* Use fixed positioning to keep it centered */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   justify-content: center;
   align-items: center;
   /*background-color: rgba(0, 0, 0, 0.5); /* Optional: Add a semi-transparent background overlay */
 }
 #loader {
-  width: 100%;
-  height: 100%;
+  width: 100px;
+  height: 100px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -193,8 +203,8 @@ p {
 }
 
 #loader img {
-  max-width: 20%;
-  max-height: 20%; /* Adjust the max-height as needed */
+  max-width: 100%;
+  max-height: 100%; /* Adjust the max-height as needed */
 }
 
 #loader p {
@@ -218,7 +228,7 @@ p {
 
 .default-button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
@@ -233,19 +243,6 @@ p {
 .default-button:focus,
 .default-button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  .default-button {
-    background-color: #f9f9f9;
-  }
 }
 
 table {
@@ -264,7 +261,7 @@ tr:nth-child(even) {
   background-color: #dddddd;
 }
 
-#cancel {
+.cancel {
   position: absolute;
   background: white;
   color: black;
@@ -273,7 +270,7 @@ tr:nth-child(even) {
   font-weight: bold;
 }
 
-#cancel:hover {
+.cancel:hover {
   cursor: pointer;
 }
 
@@ -303,4 +300,25 @@ tr:nth-child(even) {
   border: 1px solid #ddd;
   text-align: center;
   margin: 5px;
+}
+
+dialog {
+  border-radius: 0.25rem;
+  z-index: 1001;
+  overflow: auto;
+  background: white;
+  width: 800px;
+  height: 60%;
+  padding: 0;
+  border: none;
+  box-shadow:
+    rgba(0, 0, 0, 0.25) 0px 54px 55px,
+    rgba(0, 0, 0, 0.12) 0px -12px 30px,
+    rgba(0, 0, 0, 0.12) 0px 4px 6px,
+    rgba(0, 0, 0, 0.17) 0px 12px 13px,
+    rgba(0, 0, 0, 0.2) 0px -3px 5px;
+}
+
+dialog::backdrop {
+  background-color: hsla(208, 11%, 31%, 0.5);
 }
