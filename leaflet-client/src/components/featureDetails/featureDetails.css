@@ -14,20 +14,14 @@
 #markerInfo label {
   color: black;
   font-weight: bold;
-  display: inline-block; /* Labels and input fields on the same line */
-  width: 30%; /* Adjust the width as needed */
+  display: block;
+  width: 100%; /* Adjust the width as needed */
   margin-right: 10px; /* Add spacing between labels and input fields */
-  text-align: right; /* Align labels to the right */
+  text-align: left; /* Align labels to the left */
 }
 
-#markerInfo input[type='text'] {
-  width: 65%; /* Adjust the width as needed */
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  vertical-align: middle; /* Align input fields vertically with labels */
-}
-#markerInfo select {
+#markerInfo input[type='text'],
+#markerInfor select {
   width: 65%; /* Adjust the width as needed */
   padding: 5px;
   border: 1px solid #ccc;
@@ -37,10 +31,10 @@
 
 /* CSS for display fields (e.g., <span>) */
 #markerInfo span :not(.c-checkmark-span) {
-  display: inline-block; /* Display spans horizontally */
+  display: block; /* Display spans horizontally */
   width: 65%; /* Match the width of input fields */
-  vertical-align: middle; /* Align spans vertically with labels */
-  margin-right: 10px; /* Add spacing between spans and labels */
+  /* Align spans vertically with labels */
+  margin-bottom: 10px; /* Add spacing between labels */
   color: black;
 }
 
@@ -62,7 +56,7 @@
   background-color: #0056b3;
 }
 
-#cancel {
+.cancel {
   position: absolute;
   background: white;
   color: black;
@@ -71,6 +65,6 @@
   font-weight: bold;
 }
 
-#cancel:hover {
+.cancel:hover {
   cursor: pointer;
 }

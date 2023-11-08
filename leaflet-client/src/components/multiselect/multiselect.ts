@@ -1,22 +1,27 @@
-export const checkboxStatusChange = () => {
-  const multiselect = document.getElementById('mySelectLabel');
-  const multiselectOption = multiselect!.getElementsByTagName('option')[0];
+export const multiselectEmpty = (values: string) => {
+  return values === 'Velg verdier' || values === 'Ingen verdier valgt';
+};
 
-  const checkboxes = document.getElementById('mySelectOptions');
+export const checkboxStatusChange = (id: string) => {
+  const multiselect = document.getElementById(`${id}-select-label`);
+  const multiselectOption = multiselect!.getElementsByTagName('option')[0];
+  const select = document.getElementById(`${id}-form-select`) as HTMLSelectElement;
+
+  const checkboxes = document.getElementById(`${id}-select-options`);
   const checkedCheckboxes = checkboxes!.querySelectorAll('input[type=checkbox]:checked');
 
   const values = Array.from(checkedCheckboxes).map((checkbox) => checkbox.getAttribute('value'));
-
-  let dropdownValue = 'Nothing is selected';
+  let dropdownValue = 'Ingen verdier valgt';
   if (values.length > 0) {
     dropdownValue = values.join(', ');
   }
 
   multiselectOption.innerText = dropdownValue;
+  select.setAttribute('value', dropdownValue);
 };
 
-const toggleCheckboxArea = () => {
-  const checkboxes = document.getElementById('mySelectOptions');
+const toggleCheckboxArea = (elementId: string) => {
+  const checkboxes = document.getElementById(elementId);
   const displayValue = checkboxes!.style.display;
 
   if (displayValue !== 'block') {
@@ -26,70 +31,66 @@ const toggleCheckboxArea = () => {
   }
 };
 
-export const createMultiSelect = (parentElement: HTMLElement) => {
+export const createMultiSelect = (
+  parentElement: HTMLElement,
+  possibleValues: { const: string; title: string }[],
+  chosenValues: string[] | null,
+  id: string,
+) => {
   const multiselectDiv = document.createElement('div');
   multiselectDiv.id = 'myMultiSelect';
   multiselectDiv.className = 'multiselect';
 
   const selectLabel = document.createElement('div');
-  selectLabel.id = 'mySelectLabel';
+  selectLabel.id = `${id}-select-label`;
   selectLabel.className = 'selectBox';
-  selectLabel.onclick = () => {
-    console.log('select label has been clicked');
-    toggleCheckboxArea();
-  };
-  console.log('mySelect label has been created');
 
   const select = document.createElement('select');
   select.className = 'form-select';
+  select.id = `${id}-form-select`;
 
   const option = document.createElement('option');
-  option.innerText = 'some value';
+  option.innerText = chosenValues !== null ? chosenValues.toString() : ' Velg verdier';
 
   const overSelect = document.createElement('div');
   overSelect.className = 'overSelect';
 
   const selectOptionsDiv = document.createElement('div');
-  selectOptionsDiv.id = 'mySelectOptions';
-
-  const checkbox1 = document.createElement('input');
-  const customCheckbox1 = document.createElement('span');
-  customCheckbox1.className = 'c-checkmark-span';
-  checkbox1.type = 'checkbox';
-  checkbox1.id = 'one';
-  checkbox1.onchange = () => {
-    checkboxStatusChange();
+  selectOptionsDiv.id = `${id}-select-options`;
+  selectOptionsDiv.className = 'c-select-options';
+  selectOptionsDiv.style.display = 'none';
+  selectLabel.onclick = () => {
+    toggleCheckboxArea(selectOptionsDiv.id);
   };
-  checkbox1.value = 'one';
 
-  const label1 = document.createElement('label');
-  label1.className = 'c-checkbox-label';
-  label1.textContent = 'example 1';
-  label1.setAttribute('for', 'one');
+  sortValues(possibleValues);
 
-  const checkbox2 = document.createElement('input');
-  const customCheckbox2 = document.createElement('span');
-  customCheckbox2.className = 'c-checkmark-span';
-  checkbox2.type = 'checkbox';
-  checkbox2.className = 'c-checkbox-input';
-  checkbox1.className = checkbox2.id = 'two';
-  checkbox2.onchange = () => {
-    checkboxStatusChange();
-  };
-  checkbox2.value = 'two';
+  possibleValues.forEach((value) => {
+    const checkbox = document.createElement('input');
+    const customCheckbox = document.createElement('span');
+    customCheckbox.className = 'c-checkmark-span';
+    checkbox.type = 'checkbox';
+    checkbox.className = 'c-checkbox-input';
+    checkbox.id = `multiselect-checkbox-${value.const}`;
+    checkbox.onchange = () => {
+      checkboxStatusChange(id);
+    };
+    checkbox.value = value.const;
 
-  const label2 = document.createElement('label');
-  label2.className = 'c-checkbox-label';
-  label2.textContent = 'example 2';
-  label2.setAttribute('for', 'two');
+    const label = document.createElement('label');
+    label.className = 'c-checkbox-label';
+    label.textContent = value.title;
+    label.setAttribute('for', checkbox.id);
 
-  label1.appendChild(checkbox1);
-  label1.appendChild(customCheckbox1);
-  label2.appendChild(checkbox2);
-  label2.appendChild(customCheckbox2);
+    label.appendChild(checkbox);
+    label.appendChild(customCheckbox);
 
-  selectOptionsDiv.appendChild(label1);
-  selectOptionsDiv.appendChild(label2);
+    selectOptionsDiv.appendChild(label);
+
+    if (chosenValues !== null && chosenValues.includes(value.const)) {
+      checkbox.checked = true;
+    }
+  });
 
   select.appendChild(option);
 
@@ -100,4 +101,14 @@ export const createMultiSelect = (parentElement: HTMLElement) => {
   multiselectDiv.appendChild(selectOptionsDiv);
 
   parentElement.append(multiselectDiv);
+};
+
+const sortValues = (values: { const: string; title: string }[]) => {
+  values.sort((a, b) => (a.title > b.title ? 1 : b.title > a.title ? -1 : 0));
+};
+
+export const getPropValueFromMultiselect = (prop: string) => {
+  const select = document.getElementById(`${prop}-form-select`) as HTMLSelectElement;
+  const values = select?.value;
+  return values;
 };

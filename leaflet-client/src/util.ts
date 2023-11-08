@@ -1,10 +1,10 @@
 import { Feature } from 'geojson';
 import { JSONSchema4 } from 'json-schema';
+import { createMultiSelect } from './components/multiselect/multiselect';
 
 export const findPath = (feature: Feature) => {
   const { featuretype } = feature.properties!;
   const basePath = `${featuretype}/${featuretype}`;
-
   switch (featuretype) {
     case 'Beredskapspunkt':
       const beredskapstype = feature.properties!.beredskapstype[0];
@@ -125,26 +125,8 @@ export const getPropertyInput = (
     }
 
     fieldset.append(legend);
+    createMultiSelect(fieldset, possibleValues as { const: string; title: string }[], null, propertyName);
 
-    (possibleValues as { const: string; title: string }[]).forEach((possibleValue) => {
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.value = possibleValue.const;
-      checkbox.id = checkbox.name = `${propertyName}-${possibleValue.const}`;
-      checkbox.onchange = () => {
-        if (checkbox.checked && !properties[propertyName].includes(possibleValue.const)) {
-          properties[propertyName] = [...properties[propertyName], possibleValue.const];
-        } else if (!checkbox.checked && properties[propertyName].includes(possibleValue.const)) {
-          properties[propertyName] = properties[propertyName].filter((value: string) => value !== possibleValue.const);
-        }
-      };
-
-      const label = document.createElement('label');
-      label.htmlFor = `${propertyName}-${possibleValue.const}`;
-      label.textContent = possibleValue.title;
-
-      fieldset.append(checkbox, label);
-    });
     return fieldset;
   }
 

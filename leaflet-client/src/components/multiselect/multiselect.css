@@ -19,7 +19,7 @@
   bottom: 0;
 }
 
-#mySelectOptions {
+.c-select-options {
   display: none;
   border: 0.5px #7c7c7c solid;
   background-color: #ffffff;
