@@ -3,7 +3,7 @@ import { NGISFeature } from '../../types/feature';
 import { findPath, getPropertyInput, makeRequest } from '../../util';
 import { getFeatureSchema, getGeometryType, getPossibleFeatureTypes } from '../../validation';
 import { JSONSchema4 } from 'json-schema';
-import { fetchData, map } from '../../main';
+import { addToOrCreateLayer, fetchData, map } from '../../main';
 import L from 'leaflet';
 
 import './createFeature.css';
@@ -115,12 +115,14 @@ const handleSubmit = async () => {
       const editFeaturesSummary = await putFeature(newFeature, coordinates, 'Create');
 
       if (editFeaturesSummary.features_created > 0) {
+        newFeature.geometry.coordinates = coordinates;
+        addToOrCreateLayer(newFeature);
         (document.querySelector('[name="feature-type"]') as HTMLSelectElement).value = '';
         (document.querySelector('#choose-feature-properties') as HTMLDivElement).innerHTML = '';
         map.removeEventListener(L.Draw.Event.CREATED);
       }
     });
 
-    await fetchData();
+    await fetchData(true);
   });
 };

@@ -19,9 +19,9 @@ export const getDataset = async (): Promise<Dataset> => {
   return response.data;
 };
 
-export const getDatasetFeatures = async (): Promise<FeatureCollection> => {
+export const getDatasetFeatures = async (bboxQuery: string): Promise<FeatureCollection> => {
   const response = await axios.get(
-    `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&references=all`,
+    `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&bbox=${bboxQuery}&references=direct`,
   );
   return response.data;
 };
