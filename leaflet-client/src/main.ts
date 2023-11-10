@@ -86,8 +86,17 @@ const showVisibleFeatures = (bounds: L.LatLngBounds) => {
     }
   });
   generateLayerControl(featureTypes);
+  Object.keys(layers).forEach((layerName: string) => {
+    if (layerName !== 'Fender') {
+      layers[layerName].addTo(map);
+    }
+  });
 };
-
+const hideFeatures = () => {
+  Object.keys(layers).forEach((layerName: string) => {
+    layers[layerName].removeFrom(map);
+  });
+};
 const isWithinBounds = (feature: Feature, latLngBounds: L.LatLngBounds) => {
   const bufferPercentage = 20;
   if (feature.geometry.type === 'Point') {
@@ -168,8 +177,6 @@ const symbolWMS = L.tileLayer
   .addTo(map);
 
 map.on('zoomend', () => {
-  showVisibleFeatures(map.getBounds());
-
   const currentZoom = map.getZoom();
   if (currentZoom < 19) {
     map.addLayer(OpenStreetMap);
@@ -181,6 +188,11 @@ map.on('zoomend', () => {
     map.removeLayer(OpenStreetMap);
     depthWMS.bringToFront();
     symbolWMS.bringToFront();
+  }
+  if (map.getZoom() > 15) {
+    showVisibleFeatures(map.getBounds());
+  } else {
+    hideFeatures();
   }
 });
 
@@ -231,6 +243,10 @@ if (State.datasets.length > 0) {
   renderDatasetOptions();
   renderCreateFeature();
   map.on('dragend', () => {
-    showVisibleFeatures(map.getBounds());
+    if (map.getZoom() > 15) {
+      showVisibleFeatures(map.getBounds());
+    } else {
+      hideFeatures();
+    }
   });
 }
