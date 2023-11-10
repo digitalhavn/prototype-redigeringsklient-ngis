@@ -1,13 +1,22 @@
+import axios from 'axios';
 import { Feature } from 'geojson';
 import { JSONSchema4 } from 'json-schema';
-import L from 'leaflet';
-import { addToOrCreateLayer, currentFeatures, datasetFeatures, deleteLayer, featureTypes } from './main';
-import { generateLayerControl } from './components/layerControl/generateLayerControl';
-import { isEditable } from './components/featureDetails/interactiveGeometry';
+import { showErrorMessage, showInfoMessage, showSuccessMessage } from './components/alerts/alerts';
+import { TIMEOUT_WARNING } from './config';
 
+/**
+ * Find path to custom marker icon based on feature type and status.
+ *
+ * @param feature - feature to get custom icon from
+ * @returns path to custom icon as a string
+ */
 export const findPath = (feature: Feature) => {
-  const { featuretype } = feature.properties!;
+  const { featuretype, status } = feature.properties!;
   const basePath = `${featuretype}/${featuretype}`;
+
+  if (status === 'ikkeIBruk') {
+    return 'ikke-i-bruk.png';
+  }
 
   switch (featuretype) {
     case 'Beredskapspunkt':
@@ -59,8 +68,13 @@ export const findPath = (feature: Feature) => {
   }
 };
 
+/**
+ * Toggle loading spinner
+ *
+ * @param isLoading - true = show spinner, false = hide spinner
+ */
 export const setLoading = (isLoading: boolean) => {
-  const loader = document.getElementById('loading-container')!;
+  const loader = document.querySelector('#loading-container') as HTMLDivElement;
   loader.style.display = isLoading ? 'block' : 'none';
 };
 
@@ -224,40 +238,6 @@ export const getPropertyInput = (
   return inputDiv;
 };
 
-export const showVisibleFeatures = (bounds: L.LatLngBounds) => {
-  featureTypes.length = 0;
-  currentFeatures.forEach((feature) => {
-    deleteLayer(feature);
-  });
-  datasetFeatures.features.forEach((feature: Feature) => {
-    //@ts-ignore
-    if (isWithinBounds(feature, bounds)) {
-      currentFeatures.push(feature);
-      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
-      addToOrCreateLayer(feature, isEditable);
-    }
-  });
-  generateLayerControl(featureTypes);
-};
-export const isWithinBounds = (feature: Feature, latLngBounds: L.LatLngBounds) => {
-  const bufferPercentage = 20;
-  if (feature.geometry.type === 'Point') {
-    const { coordinates } = feature.geometry;
-    return latLngBounds.pad(bufferPercentage / 100).contains(L.latLng(coordinates[0], coordinates[1]));
-  } else if (feature.geometry.type === 'LineString' || feature.geometry.type === 'Polygon') {
-    const { coordinates } = feature.geometry;
-    for (const coord of coordinates) {
-      const lat = typeof coord === 'number' ? coord : (coord[1] as number);
-      const lng = typeof coord === 'number' ? coord : (coord[0] as number);
-      if (!latLngBounds.pad(bufferPercentage / 100).contains(L.latLng(lat, lng))) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return false;
-};
-
 //Code below is a lot cleaner but typescript complains
 /*
 export const isWithinBounds = (feature: Feature, latLngBounds: L.LatLngBounds) => {
@@ -283,3 +263,67 @@ export const isWithinBounds = (feature: Feature, latLngBounds: L.LatLngBounds) =
   return false;
 };
 */
+/**
+ * Extract error message from a http error to display in the UI
+ *
+ * @param error - error response
+ * @returns list of strings or {@link HTMLElement} containing the error message
+ */
+export const getErrorMessage = (error: unknown): (string | Node)[] => {
+  if (axios.isAxiosError(error)) {
+    const { code, response } = error;
+    if (code === 'ECONNABORTED') {
+      return ['Forespørselen ble avbrutt fordi det tok for lang tid...'];
+    } else if (response?.status === axios.HttpStatusCode.BadRequest) {
+      console.error(response.data);
+      const { errors, title }: { errors: { lokalid: string; reason: string }[]; title: string } = response.data;
+      const errorMessage: (string | HTMLElement)[] = [`${title}:`];
+      errors.forEach(({ lokalid, reason }) => {
+        const newError = document.createElement('div');
+        newError.textContent = `lokalid ${lokalid.slice(0, 7)}... - ${reason}`;
+        errorMessage.push(newError);
+      });
+      return errorMessage;
+    } else if (response?.status && response.status >= axios.HttpStatusCode.InternalServerError) {
+      return [`${response.status}: Noe gikk galt med tjeneren. Prøv på nytt senere...`];
+    } else {
+      return ['Noe gikk galt...'];
+    }
+  } else {
+    return [JSON.stringify(error)];
+  }
+};
+
+/**
+ * Util function for handling loading, errors, and success for a request.
+ * Will also show a info toast if request takes longer than expected.
+ *
+ * @param request - request function
+ * @param showSuccess - whether or not a toast message should be shown when request completes successfully
+ * @param onError - function to run on error (in addition to error toast)
+ * @param successMessage - custom success message
+ * @param errorMessage - custom error message
+ */
+export const makeRequest = async (
+  request: () => Promise<void>,
+  showSuccess: boolean = true,
+  onError?: () => void,
+  successMessage?: string,
+  errorMessage?: string,
+) => {
+  setLoading(true);
+  const timeoutWarningID = setTimeout(() => {
+    showInfoMessage('Forespørselen tar lengere tid enn forventet. Vennligst vent...');
+  }, TIMEOUT_WARNING);
+
+  try {
+    await request();
+    showSuccess && showSuccessMessage(successMessage);
+  } catch (error) {
+    showErrorMessage(error, errorMessage);
+    onError?.();
+  }
+
+  clearTimeout(timeoutWarningID);
+  setLoading(false);
+};

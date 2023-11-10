@@ -1,4 +1,5 @@
 import './style.css';
+import './components/alerts/alerts.css';
 import L, { Layer, WMSOptions } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw';
@@ -6,7 +7,7 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import './components/layerControl/layerControl.css';
 import './components/header/header.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
-import { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
+import { Feature, GeoJsonProperties, Geometry } from 'geojson';
 import { onMarkerClick } from './components/featureDetails';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
@@ -15,10 +16,11 @@ import { renderCreateFeature } from './components/createFeature';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
 import { renderSearch } from './components/search/search.js';
 import drawLocales from 'leaflet-draw-locales';
-import { updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
+import { isEditable, updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
+import { findPath, makeRequest } from './util.js';
 
 drawLocales('norwegian');
-import { findPath, isWithinBounds, setLoading, showVisibleFeatures } from './util.js';
+
 export const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = false) => {
   feature.properties!.draggable = makeDraggable;
   const objectType: string = feature.properties!.featuretype;
@@ -69,6 +71,40 @@ export const toggleLayer = (checkbox: HTMLInputElement) => {
   } else {
     map.removeLayer(layers[checkbox.value]);
   }
+};
+
+const showVisibleFeatures = (bounds: L.LatLngBounds) => {
+  featureTypes.length = 0;
+  currentFeatures.forEach((feature) => {
+    deleteLayer(feature);
+  });
+  State.datasetFeatures.features.forEach((feature: Feature) => {
+    if (isWithinBounds(feature, bounds)) {
+      currentFeatures.push(feature);
+      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+      addToOrCreateLayer(feature, isEditable);
+    }
+  });
+  generateLayerControl(featureTypes);
+};
+
+const isWithinBounds = (feature: Feature, latLngBounds: L.LatLngBounds) => {
+  const bufferPercentage = 20;
+  if (feature.geometry.type === 'Point') {
+    const { coordinates } = feature.geometry;
+    return latLngBounds.pad(bufferPercentage / 100).contains(L.latLng(coordinates[0], coordinates[1]));
+  } else if (feature.geometry.type === 'LineString' || feature.geometry.type === 'Polygon') {
+    const { coordinates } = feature.geometry;
+    for (const coord of coordinates) {
+      const lat = typeof coord === 'number' ? coord : (coord[1] as number);
+      const lng = typeof coord === 'number' ? coord : (coord[0] as number);
+      if (!latLngBounds.pad(bufferPercentage / 100).contains(L.latLng(lat, lng))) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
 };
 
 export const layers: Record<string, L.GeoJSON> = {};
@@ -147,6 +183,7 @@ map.on('zoomend', () => {
     symbolWMS.bringToFront();
   }
 });
+
 L.control.layers(baseMaps).addTo(map).setPosition('topright');
 
 depthWMS.bringToFront();
@@ -154,40 +191,46 @@ symbolWMS.bringToFront();
 
 renderSearch();
 
-setLoading(true);
-const datasets = await getDatasets();
-State.setDatasets(datasets);
-State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
 export const featureTypes: [string, string][] = [];
 
-export let datasetFeatures: FeatureCollection<Geometry, GeoJsonProperties>;
 export const currentFeatures: Feature<Geometry, GeoJsonProperties>[] = [];
+
+await makeRequest(async () => {
+  const datasets = await getDatasets();
+  State.setDatasets(datasets);
+  State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
+}, false);
+
 export const fetchData = async () => {
-  setLoading(true);
   Object.keys(layers).forEach((key) => {
     featureTypes.splice(0, featureTypes.length);
     layers[key].clearLayers();
   });
 
-  State.setActiveDataset(await getDataset());
-  State.setSchema(await getSchema());
+  await makeRequest(async () => {
+    const [dataset, schema, datasetFeatures] = await Promise.all([getDataset(), getSchema(), getDatasetFeatures()]);
 
-  datasetFeatures = await getDatasetFeatures();
+    State.setActiveDataset(dataset);
+    State.setSchema(schema);
+    State.setDatasetFeatures(datasetFeatures);
 
-  datasetFeatures.features.forEach((feature) => {
-    if (isWithinBounds(feature, map.getBounds())) {
-      currentFeatures.push(feature);
-      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
-      addToOrCreateLayer(feature);
-    }
-  });
-  generateLayerControl(featureTypes);
+    datasetFeatures.features.forEach((feature) => {
+      if (isWithinBounds(feature, map.getBounds())) {
+        currentFeatures.push(feature);
+        featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+        addToOrCreateLayer(feature);
+      }
+    });
 
-  setLoading(false);
+    generateLayerControl(featureTypes);
+  }, false);
 };
-await fetchData();
-renderDatasetOptions();
-renderCreateFeature();
-map.on('dragend', () => {
-  showVisibleFeatures(map.getBounds());
-});
+
+if (State.datasets.length > 0) {
+  await fetchData();
+  renderDatasetOptions();
+  renderCreateFeature();
+  map.on('dragend', () => {
+    showVisibleFeatures(map.getBounds());
+  });
+}

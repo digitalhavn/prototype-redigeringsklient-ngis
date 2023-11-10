@@ -11,5 +11,6 @@ export default defineConfig({
       all: 'true',
       exclude: [...configDefaults.exclude, '**/models/**', '**/*.d.ts'],
     },
+    environment: 'jsdom',
   },
 });

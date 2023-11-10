@@ -1,9 +1,8 @@
 import { putFeature } from '../../ngisClient';
 import { NGISFeature } from '../../types/feature';
-import { findPath, getPropertyInput, setLoading } from '../../util';
+import { findPath, getPropertyInput, makeRequest } from '../../util';
 import { getFeatureSchema, getGeometryType, getPossibleFeatureTypes } from '../../validation';
 import { JSONSchema4 } from 'json-schema';
-import { showUpdateMessage } from '../alerts/update';
 import { fetchData, map } from '../../main';
 import L from 'leaflet';
 
@@ -105,34 +104,23 @@ const handleSubmit = async () => {
     new L.Draw.Polyline(map).enable();
   }
 
-  let i = 0;
-
   // When marker is placed or line is drawn, create new feature
   map.on(L.Draw.Event.CREATED, async ({ layer }) => {
-    i++;
-    // Should only print 1
-    console.log(i);
     const coordinates =
       geometryType === 'Point'
         ? [layer._latlng.lat, layer._latlng.lng, 0]
         : [...layer._latlngs.map(({ lat, lng }: { lat: number; lng: number }) => [lat, lng, 0])];
 
-    setLoading(true);
-
-    try {
+    await makeRequest(async () => {
       const editFeaturesSummary = await putFeature(newFeature, coordinates, 'Create');
 
       if (editFeaturesSummary.features_created > 0) {
-        showUpdateMessage();
         (document.querySelector('[name="feature-type"]') as HTMLSelectElement).value = '';
         (document.querySelector('#choose-feature-properties') as HTMLDivElement).innerHTML = '';
-        await fetchData();
+        map.removeEventListener(L.Draw.Event.CREATED);
       }
-    } catch (error) {
-      // TODO: show error notification
-      console.log(error);
-    }
+    });
 
-    setLoading(false);
+    await fetchData();
   });
 };

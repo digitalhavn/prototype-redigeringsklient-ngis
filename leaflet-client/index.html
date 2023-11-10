@@ -24,14 +24,6 @@
     </div>
   </div>
 
-  <div id="updateMessage" class="update-message">
-    <span class="checkmark">&#10004;</span> Endringer lagret
-  </div>
-
-  <div id="errorMessage" class="error-message">
-    <span class="error"></span> Noe gikk galt
-  </div>
-
   <div id="object-list">
     <button class="c-side-button" id="create-feature-button">Legg til objekt</button>
     <button type="button" class="collapsible">Objekter</button>
@@ -52,6 +44,12 @@
       <select id="feature-type" name="feature-type" type="text"></select>
       <div id="choose-feature-properties"></div>
     </form>
+  </dialog>
+
+  <dialog id="confirm-deletion">
+    <h3>Er du sikker på at du vil slette objektet?</h3>
+    <button id="close-deletion-btn">Avbryt</button>
+    <button id="confirm-deletion-btn">Bekreft</button>
   </dialog>
 
   <div id="markerInfo" style="display: none"></div>

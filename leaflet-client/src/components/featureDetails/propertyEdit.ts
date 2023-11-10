@@ -1,16 +1,14 @@
-import { deleteLayer } from '../../main';
+import { deleteLayer, updateLayer } from '../../main';
 import { getAndLockFeature, putFeature, updateFeatureProperties } from '../../ngisClient';
 import cloneDeep from 'lodash/cloneDeep';
-import { setLoading } from '../../util';
-import { showUpdateMessage } from '../alerts/update';
 import { renderGeometry } from './geometryEdit';
 import { handleCancelButtonClick } from '.';
 import { NGISFeature } from '../../types/feature';
 import { IGNORED_PROPS, READ_ONLY_PROPS } from '../../config';
 import { findSchemaByTitle, getFeatureSchema } from '../../validation';
+import { makeRequest } from '../../util';
 
 const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement, responseField: HTMLDivElement) => {
-  setLoading(true);
   const featureCopy = cloneDeep(feature);
 
   const featureProperties = feature.properties;
@@ -28,10 +26,10 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
   const { validate } = getFeatureSchema(feature.properties!.featuretype);
   validate && console.log(validate.schema);
   if (!validate || validate(feature)) {
-    handleCancelButtonClick();
-    console.log('Data is valid');
-    await updateFeatureProperties(feature.properties);
-    showUpdateMessage();
+    await makeRequest(async () => {
+      await updateFeatureProperties(feature.properties);
+      updateLayer(feature);
+    });
   } else {
     console.log('Validation errors: ', validate.errors);
     const errorMessages = validate
@@ -46,26 +44,29 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
       .join(', ');
     responseField.style.color = 'red'; // Set text color to red
     responseField.textContent = `Validation errors: ${errorMessages}`;
-    feature = featureCopy;
+    feature.properties = featureCopy.properties;
   }
-  setLoading(false);
 };
 
 const handleDeleteButtonClick = async (feature: NGISFeature) => {
-  setLoading(true);
+  const modal = document.querySelector('#confirm-deletion') as HTMLDialogElement;
+  const confirmButton = document.querySelector('#confirm-deletion-btn') as HTMLButtonElement;
+  const closeButton = document.querySelector('#close-deletion-btn') as HTMLButtonElement;
 
-  await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
+  modal.showModal();
+  closeButton.onclick = () => {
+    modal.close();
+  };
+  confirmButton.onclick = async () => {
+    modal.close();
+    await makeRequest(async () => {
+      await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
+      await putFeature(feature, feature.geometry.coordinates, 'Erase');
 
-  const saveResponse = await putFeature(feature, feature.geometry.coordinates, 'Erase');
-
-  if (saveResponse.features_erased > 0) {
-    deleteLayer(feature);
-    handleCancelButtonClick();
-    console.info('Feature was deleted');
-  } else {
-    console.error('Feature was not deleted');
-  }
-  setLoading(false);
+      deleteLayer(feature);
+      handleCancelButtonClick();
+    });
+  };
 };
 
 export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElement) => {
