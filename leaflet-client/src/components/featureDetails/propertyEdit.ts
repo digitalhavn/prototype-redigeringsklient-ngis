@@ -1,7 +1,7 @@
 import { deleteLayer } from '../../main';
 import { getAndLockFeature, putFeature, updateFeatureProperties } from '../../ngisClient';
 import cloneDeep from 'lodash/cloneDeep';
-import { setLoading } from '../../util';
+import { getValidationSchemaType, setLoading } from '../../util';
 import { showUpdateMessage } from '../alerts/update';
 import { renderGeometry } from './geometryEdit';
 import { handleCancelButtonClick } from '.';
@@ -21,7 +21,9 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
       if (!isNaN(parsedValue)) {
         featureProperties[prop] = parsedValue;
       } else {
-        featureProperties[prop] = form[prop].value;
+        getValidationSchemaType(feature, prop) === 'array'
+          ? (featureProperties[prop] = form[prop].value.split(', '))
+          : (featureProperties[prop] = form[prop].value);
       }
     }
   }
@@ -92,7 +94,6 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
       label.textContent = `${prop}:`;
       if (
         READ_ONLY_PROPS.includes(prop) ||
-        Array.isArray(featureProperties[prop]) ||
         (relevantSchema && relevantSchema.properties.properties.properties[prop].readOnly)
       ) {
         // Create a non-editable display field (e.g., a <span>)
@@ -121,6 +122,14 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
 
           // Append the label and select element to the form
           form.append(label, select);
+        } else if (Array.isArray(featureProperties[prop])) {
+          form.append(label);
+          createMultiSelect(
+            form,
+            relevantSchema?.properties.properties.properties[prop].items.oneOf as { const: string; title: string }[],
+            featureProperties[prop],
+            prop,
+          );
         } else {
           // Create an input field for other properties
           const input = document.createElement('input');
@@ -135,7 +144,6 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
     }
   }
 
-  createMultiSelect(form);
   contentDiv.append(form);
 
   if (feature.geometry.type !== 'Polygon') {

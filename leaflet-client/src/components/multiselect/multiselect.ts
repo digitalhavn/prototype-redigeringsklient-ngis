@@ -18,6 +18,7 @@ export const checkboxStatusChange = (id: string) => {
 
   multiselectOption.innerText = dropdownValue;
   select.setAttribute('value', dropdownValue);
+  select.dispatchEvent(new Event('change'));
 };
 
 const toggleCheckboxArea = (elementId: string) => {
@@ -38,7 +39,7 @@ export const createMultiSelect = (
   id: string,
 ) => {
   const multiselectDiv = document.createElement('div');
-  multiselectDiv.id = 'myMultiSelect';
+  multiselectDiv.id = `${id}-multiSelect`;
   multiselectDiv.className = 'multiselect';
 
   const selectLabel = document.createElement('div');
@@ -48,9 +49,10 @@ export const createMultiSelect = (
   const select = document.createElement('select');
   select.className = 'form-select';
   select.id = `${id}-form-select`;
+  select.name = id;
 
   const option = document.createElement('option');
-  option.innerText = chosenValues !== null ? chosenValues.toString() : ' Velg verdier';
+  option.innerText = chosenValues !== null ? chosenValues.join(', ') : ' Velg verdier';
 
   const overSelect = document.createElement('div');
   overSelect.className = 'overSelect';
@@ -92,6 +94,10 @@ export const createMultiSelect = (
     }
   });
 
+  if (chosenValues !== null) {
+    parentElement.setAttribute('value', chosenValues.join(', '));
+  }
+
   select.appendChild(option);
 
   selectLabel.appendChild(select);
@@ -99,8 +105,14 @@ export const createMultiSelect = (
 
   multiselectDiv.appendChild(selectLabel);
   multiselectDiv.appendChild(selectOptionsDiv);
+  multiselectDiv.nodeValue = select.getAttribute('value');
 
   parentElement.append(multiselectDiv);
+  select.addEventListener('change', () => {
+    if (parentElement instanceof HTMLFormElement) {
+      parentElement[id].setAttribute('value', select.getAttribute('value'));
+    }
+  });
 };
 
 const sortValues = (values: { const: string; title: string }[]) => {

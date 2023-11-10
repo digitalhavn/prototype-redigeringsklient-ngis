@@ -1,6 +1,8 @@
 import { Feature } from 'geojson';
 import { JSONSchema4 } from 'json-schema';
 import { createMultiSelect } from './components/multiselect/multiselect';
+import { NGISFeature } from './types/feature';
+import { getFeatureSchema } from './validation';
 
 export const findPath = (feature: Feature) => {
   const { featuretype } = feature.properties!;
@@ -200,4 +202,8 @@ export const getPropertyInput = (
   const inputDiv = document.createElement('div');
   inputDiv.append(label, input);
   return inputDiv;
+};
+
+export const getValidationSchemaType = (feature: NGISFeature, prop: string) => {
+  return getFeatureSchema(feature.properties!.featuretype).schema?.properties.properties.properties[prop].type;
 };
