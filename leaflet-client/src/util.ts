@@ -238,31 +238,6 @@ export const getPropertyInput = (
   return inputDiv;
 };
 
-//Code below is a lot cleaner but typescript complains
-/*
-export const isWithinBounds = (feature: Feature, latLngBounds: L.LatLngBounds) => {
-  if (feature.geometry.coordinates && ['Point', 'LineString', 'Polygon'].includes(feature.geometry.type)) {
-    const { coordinates } = feature.geometry;
-    switch (feature.geometry.type) {
-      case 'Point':
-        return latLngBounds.contains(L.latLng(coordinates[0], coordinates[1]));
-
-      case 'LineString':
-      case 'Polygon':
-        for (const coord of coordinates) {
-          if (!latLngBounds.contains(L.latLng(coord[1], coord[0]))) {
-            return false;
-          }
-        }
-        return true;
-
-      default:
-        return false;
-    }
-  }
-  return false;
-};
-*/
 /**
  * Extract error message from a http error to display in the UI
  *
