@@ -1,9 +1,8 @@
 import { putFeature } from '../../ngisClient';
 import { NGISFeature } from '../../types/feature';
-import { findPath, getPropertyInput, setLoading } from '../../util';
+import { findPath, getPropertyInput, makeRequest } from '../../util';
 import { getFeatureSchema, getGeometryType, getPossibleFeatureTypes } from '../../validation';
 import { JSONSchema4 } from 'json-schema';
-import { showUpdateMessage } from '../alerts/update';
 import { fetchData, map } from '../../main';
 import L from 'leaflet';
 
@@ -24,18 +23,6 @@ export const renderCreateFeature = () => {
     modal.showModal();
     handleOpenCreateFeatureModal();
   };
-
-  modal.addEventListener('click', (e) => {
-    const dialogBounds = modal.getBoundingClientRect();
-    if (
-      e.clientX < dialogBounds.left ||
-      e.clientX > dialogBounds.right ||
-      e.clientY < dialogBounds.top ||
-      e.clientY > dialogBounds.bottom
-    ) {
-      modal.close();
-    }
-  });
 
   const cancelButton = document.querySelector('#close-modal-button') as HTMLButtonElement;
   cancelButton.onclick = () => modal.close();
@@ -105,14 +92,15 @@ const handleSubmit = async () => {
       delete newFeature.properties[property];
     }
   });
-  const geometryType = getGeometryType(newFeature.properties.featuretype);
-  newFeature.geometry.type = geometryType;
 
   const path = findPath(newFeature);
   const customIcon = L.icon({
     iconUrl: `/havnesymboler/${path}`,
     iconSize: [15, 15],
   });
+
+  const geometryType = getGeometryType(newFeature.properties.featuretype);
+  newFeature.geometry.type = geometryType;
 
   // Start draw
   if (geometryType === 'Point') {
@@ -128,20 +116,16 @@ const handleSubmit = async () => {
         ? [layer._latlng.lat, layer._latlng.lng, 0]
         : [...layer._latlngs.map(({ lat, lng }: { lat: number; lng: number }) => [lat, lng, 0])];
 
-    setLoading(true);
-
-    try {
+    await makeRequest(async () => {
       const editFeaturesSummary = await putFeature(newFeature, coordinates, 'Create');
 
       if (editFeaturesSummary.features_created > 0) {
-        showUpdateMessage();
-        await fetchData();
+        (document.querySelector('[name="feature-type"]') as HTMLSelectElement).value = '';
+        (document.querySelector('#choose-feature-properties') as HTMLDivElement).innerHTML = '';
+        map.removeEventListener(L.Draw.Event.CREATED);
       }
-    } catch (error) {
-      // TODO: show error notification
-      console.log(error);
-    }
+    });
 
-    setLoading(false);
+    await fetchData();
   });
 };

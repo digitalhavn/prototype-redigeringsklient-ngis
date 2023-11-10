@@ -1,10 +1,13 @@
 import { Feature, FeatureCollection, GeoJsonProperties, Position } from 'geojson';
-import { NGIS_PROXY_URL } from './config';
+import { DEFAULT_HTTP_TIMEOUT, NGIS_PROXY_URL } from './config';
 import { Dataset } from './types/dataset';
 import axios from 'axios';
 import { EditFeaturesSummary } from './types/editFeaturesSummary';
 import { JSONSchemaType } from 'ajv';
 import { State } from './state';
+import { NGISFeature } from './types/feature';
+
+axios.defaults.timeout = DEFAULT_HTTP_TIMEOUT;
 
 export const getDatasets = async (): Promise<Dataset[]> => {
   const response = await axios.get(`${NGIS_PROXY_URL}/datasets`);
@@ -44,6 +47,14 @@ export const getAndLockFeature = async (localId: string): Promise<FeatureCollect
   return response.data;
 };
 
+export const getAndLockFeatures = async (localIds: string[]): Promise<FeatureCollection> => {
+  const localIdStrings = localIds.join(',');
+  const response = await axios.get(
+    `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?query=in(*/identifikasjon/lokalid,${localIdStrings})&crs_EPSG=4258&locking_type=user_lock`,
+  );
+  return response.data;
+};
+
 export const putFeature = async (
   feature: Feature,
   coordinates: Position | Position[] | Position[][],
@@ -72,5 +83,37 @@ export const putFeature = async (
     payload,
     { headers: { 'Content-Type': 'application/json' } },
   );
+  return response.data;
+};
+
+export const updateFeatures = async (features: NGISFeature[]) => {
+  const localIdStrings = features.map((feature) => feature.properties!.identifikasjon.lokalId);
+
+  const featuresWithUpdate = features.map((feature) => {
+    return {
+      type: 'Feature',
+      geometry: { ...feature.geometry },
+      properties: feature.properties,
+      update: { action: 'Replace' },
+    };
+  });
+  const payload = {
+    type: 'FeatureCollection',
+    crs: {
+      type: 'name',
+      properties: {
+        name: 'EPSG:4258',
+      },
+    },
+    features: featuresWithUpdate,
+  };
+
+  await getAndLockFeatures(localIdStrings);
+  const response = await axios.post(
+    `${NGIS_PROXY_URL}/datasets/${State.activeDataset?.id}/features?crs_EPSG=4258&locking_type=user_lock`,
+    payload,
+    { headers: { 'Content-Type': 'application/json' } },
+  );
+
   return response.data;
 };

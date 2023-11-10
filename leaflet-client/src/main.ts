@@ -1,4 +1,5 @@
 import './style.css';
+import './components/alerts/alerts.css';
 import L, { Layer, WMSOptions } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw';
@@ -6,29 +7,29 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import './components/layerControl/layerControl.css';
 import './components/multiselect/multiselect.css';
 import './components/featureDetails/featureDetails.css';
+import './components/header/header.css';
 import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails';
-import { findPath, setLoading } from './util.js';
+import { findPath, makeRequest } from './util.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
-import { renderDatasetOptions } from './components/header.js';
+import { renderDatasetOptions } from './components/header/header.js';
 import { renderCreateFeature } from './components/createFeature';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
+import { renderSearch } from './components/search/search.js';
 import drawLocales from 'leaflet-draw-locales';
+import { updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
 
 drawLocales('norwegian');
 
-export const addToOrCreateLayer = (feature: Feature) => {
+export const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = false) => {
+  feature.properties!.draggable = makeDraggable;
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
     layers[objectType] = L.geoJson(undefined, {
       style: () => {
         return GEO_JSON_STYLE_OPTIONS[feature.geometry.type];
-      },
-      onEachFeature: (feature, layer) => {
-        featuresMap[feature.properties.identifikasjon.lokalId] = layer;
-        layer.on('click', onMarkerClick);
       },
       pointToLayer: (feature) => {
         const path = findPath(feature);
@@ -37,7 +38,16 @@ export const addToOrCreateLayer = (feature: Feature) => {
           iconSize: [15, 15],
         });
         const [lng, lat] = feature.geometry.coordinates;
-        return L.marker([lng, lat], { icon: customIcon });
+        const marker = L.marker([lng, lat], { icon: customIcon, draggable: feature.properties!.draggable });
+        delete feature.properties!.draggable;
+        marker.on('dragend', (event) => {
+          updateEditedFeatures(event);
+        });
+        return marker;
+      },
+      onEachFeature: (feature: Feature, layer: L.Layer) => {
+        featuresMap[feature.properties!.identifikasjon.lokalId] = layer;
+        layer.on('click', onMarkerClick);
       },
       coordsToLatLng: (coords) => {
         return L.latLng(coords);
@@ -47,9 +57,9 @@ export const addToOrCreateLayer = (feature: Feature) => {
   layers[objectType].addData(feature);
 };
 
-export const updateLayer = (updatedFeature: Feature) => {
+export const updateLayer = (updatedFeature: Feature, makeDraggable: boolean = false) => {
   deleteLayer(updatedFeature);
-  addToOrCreateLayer(updatedFeature);
+  addToOrCreateLayer(updatedFeature, makeDraggable);
 };
 
 export const deleteLayer = (deletedFeature: Feature) => {
@@ -71,7 +81,13 @@ export const layers: Record<string, L.GeoJSON> = {};
 // update and delete already created layers
 const featuresMap: Record<string, Layer> = {};
 
-export const map = L.map('map').setView(START_LOCATION, 15); // Creating the map object
+export const map = L.map('map', { zoomControl: false }).setView(START_LOCATION, 15); // Creating the map object
+
+L.control
+  .zoom({
+    position: 'topright',
+  })
+  .addTo(map);
 
 const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
   ...MAP_OPTIONS,
@@ -133,39 +149,44 @@ map.on('zoomend', () => {
     symbolWMS.bringToFront();
   }
 });
+L.control.layers(baseMaps).addTo(map).setPosition('topright');
 
-L.control.layers(baseMaps).addTo(map);
 depthWMS.bringToFront();
 symbolWMS.bringToFront();
 
-setLoading(true);
-const datasets = await getDatasets();
-State.setDatasets(datasets);
-State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
+renderSearch();
 
 const featureTypes: [string, string][] = [];
 
-export const fetchData = async () => {
-  setLoading(true);
+await makeRequest(async () => {
+  const datasets = await getDatasets();
+  State.setDatasets(datasets);
+  State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
+}, false);
 
+export const fetchData = async () => {
   Object.keys(layers).forEach((key) => {
     featureTypes.splice(0, featureTypes.length);
     layers[key].clearLayers();
   });
 
-  State.setActiveDataset(await getDataset());
-  State.setSchema(await getSchema());
+  await makeRequest(async () => {
+    const [dataset, schema, datasetFeatures] = await Promise.all([getDataset(), getSchema(), getDatasetFeatures()]);
 
-  const datasetFeatures = await getDatasetFeatures();
-  datasetFeatures.features.forEach((feature) => {
-    featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
-    addToOrCreateLayer(feature);
-  });
-  generateLayerControl(featureTypes);
+    State.setActiveDataset(dataset);
+    State.setSchema(schema);
 
-  setLoading(false);
+    datasetFeatures.features.forEach((feature) => {
+      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+      addToOrCreateLayer(feature);
+    });
+
+    generateLayerControl(featureTypes);
+  }, false);
 };
 
-await fetchData();
-renderDatasetOptions();
-renderCreateFeature();
+if (State.datasets.length > 0) {
+  await fetchData();
+  renderDatasetOptions();
+  renderCreateFeature();
+}

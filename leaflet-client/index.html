@@ -13,16 +13,15 @@
   <header>
     <p>Havnedata klient</p>
     <select name="select-dataset" id="select-dataset" style="display: none;"></select>
+    <button id="saveChanges">Lagre endringer</button>
+    <button id="discardChanges">Angre endringer</button>
+    <button id="editMap">Rediger kart</button>
   </header>
 
   <div class="container" id="loading-container">
     <div id="loader">
       <img src="/wheel.svg"></img>
     </div>
-  </div>
-
-  <div id="updateMessage" class="update-message">
-    <span class="checkmark">&#10004;</span> Update Successful
   </div>
 
   <div id="object-list">
@@ -34,6 +33,7 @@
     <script src="\src\components\layerControl\collapsibleDiv.ts"></script>
     <button id="reset-map-button" class="c-side-button">Tilbakestill kart</button>
   </div>
+  </div>
 
   <dialog data-modal class="modal">
     <form id="create-feature-form">
@@ -44,6 +44,12 @@
       <select id="feature-type" name="feature-type" type="text"></select>
       <div id="choose-feature-properties"></div>
     </form>
+  </dialog>
+
+  <dialog id="confirm-deletion">
+    <h3>Er du sikker på at du vil slette objektet?</h3>
+    <button id="close-deletion-btn">Avbryt</button>
+    <button id="confirm-deletion-btn">Bekreft</button>
   </dialog>
 
   <div id="markerInfo" style="display: none"></div>
