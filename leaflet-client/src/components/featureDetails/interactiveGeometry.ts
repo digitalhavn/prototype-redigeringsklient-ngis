@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { updateLayer } from '../../main';
+import { fetchData, updateLayer } from '../../main';
 import { cloneDeep } from 'lodash';
 import { NGISFeature } from '../../types/feature';
 import { updateFeatures } from '../../ngisClient';
@@ -10,7 +10,7 @@ import { State } from '../../state';
 
 export let isEditable: boolean;
 
-const updateEditable = (layers: any) => {
+const updateEditable = () => {
   Object.keys(layers).forEach((layerName: any) => {
     const layer = layers[layerName];
     if (layer instanceof L.GeoJSON) {
@@ -27,14 +27,14 @@ const updateEditable = (layers: any) => {
   });
 };
 
-const editMap = (layers: any) => {
+const editMap = () => {
   isEditable = true;
-  updateEditable(layers);
+  updateEditable();
 };
 
-export const exitEdit = (layers: any) => {
+export const exitEdit = () => {
   isEditable = false;
-  updateEditable(layers);
+  updateEditable();
 };
 
 const originalFeatures: NGISFeature[] = [];
@@ -67,6 +67,7 @@ const saveEdits = async () => {
         await updateFeatures(tempEditedFeatures);
         originalFeatures.length = 0;
         tempEditedFeatures.length = 0;
+        await fetchData();
       },
       true,
       discardEdits,
@@ -101,21 +102,23 @@ editMapButton!.addEventListener('click', () => {
   editMapButton!.style.display = 'none';
   saveChangesButton!.style.display = 'block';
   discardChangesButton!.style.display = 'block';
-  editMap(layers);
+  editMap();
 });
 
-saveChangesButton!.addEventListener('click', () => {
+saveChangesButton!.addEventListener('click', async () => {
   saveChangesButton!.style.display = 'none';
   discardChangesButton!.style.display = 'none';
-  saveEdits();
   editMapButton!.style.display = 'block';
-  exitEdit(layers);
+  exitEdit();
+  await saveEdits();
 });
 
-discardChangesButton!.addEventListener('click', () => {
+discardChangesButton!.addEventListener('click', () => onDiscardChangesButtonClick());
+
+export const onDiscardChangesButtonClick = () => {
   saveChangesButton!.style.display = 'none';
   discardChangesButton!.style.display = 'none';
   discardEdits();
   editMapButton!.style.display = 'block';
-  exitEdit(layers);
-});
+  exitEdit();
+};

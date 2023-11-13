@@ -5,6 +5,7 @@ import { getFeatureSchema, getGeometryType, getPossibleFeatureTypes } from '../.
 import { JSONSchema4 } from 'json-schema';
 import { addToOrCreateLayer, fetchData, map } from '../../main';
 import L from 'leaflet';
+import { onDiscardChangesButtonClick } from '../featureDetails/interactiveGeometry';
 
 import './createFeature.css';
 
@@ -28,6 +29,7 @@ export const renderCreateFeature = () => {
 };
 
 const handleOpenCreateFeatureModal = () => {
+  onDiscardChangesButtonClick();
   const form = document.querySelector('#create-feature-form') as HTMLFormElement;
   form.onsubmit = handleSubmit;
 

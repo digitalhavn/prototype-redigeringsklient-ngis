@@ -251,11 +251,14 @@ export const getErrorMessage = (error: unknown): (string | Node)[] => {
       return ['Forespørselen ble avbrutt fordi det tok for lang tid...'];
     } else if (response?.status === axios.HttpStatusCode.BadRequest) {
       console.error(response.data);
-      const { errors, title }: { errors: { lokalid: string; reason: string }[]; title: string } = response.data;
+      if (typeof response.data === 'string') {
+        return [response.data];
+      }
+      const { errors, title }: { errors: { lokalid?: string; reason: string }[]; title: string } = response.data;
       const errorMessage: (string | HTMLElement)[] = [`${title}:`];
       errors.forEach(({ lokalid, reason }) => {
         const newError = document.createElement('div');
-        newError.textContent = `lokalid ${lokalid.slice(0, 7)}... - ${reason}`;
+        newError.textContent = lokalid ? `lokalid ${lokalid.slice(0, 7)}... - ${reason}` : reason;
         errorMessage.push(newError);
       });
       return errorMessage;
