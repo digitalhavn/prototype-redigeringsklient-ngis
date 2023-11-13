@@ -64,16 +64,21 @@ export const deleteLayer = (deletedFeature: Feature) => {
   const deletedLayer = featuresMap[deletedFeature.properties!.identifikasjon.lokalId];
   layers[deletedFeature.properties!.featuretype].removeLayer(deletedLayer);
 };
-
+let unusedLayers: string[] = ['Fender'];
 export const toggleLayer = (checkbox: HTMLInputElement) => {
   if (checkbox.checked) {
     map.addLayer(layers[checkbox.value]);
+    unusedLayers = unusedLayers.filter((el) => {
+      return el !== checkbox.value;
+    });
   } else {
     map.removeLayer(layers[checkbox.value]);
+    unusedLayers.push(checkbox.value);
   }
 };
 
 const showVisibleFeatures = (bounds: L.LatLngBounds) => {
+  console.log(unusedLayers);
   featureTypes.length = 0;
   currentFeatures.forEach((feature) => {
     deleteLayer(feature);
@@ -87,7 +92,7 @@ const showVisibleFeatures = (bounds: L.LatLngBounds) => {
   });
   generateLayerControl(featureTypes);
   Object.keys(layers).forEach((layerName: string) => {
-    if (layerName !== 'Fender') {
+    if (!unusedLayers.includes(layerName)) {
       layers[layerName].addTo(map);
     }
   });
