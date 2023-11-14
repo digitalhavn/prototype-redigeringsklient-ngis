@@ -1,6 +1,7 @@
-import { fetchData, flyToActive, initDataset } from '../../main';
+import { featureTypes, flyToActive, initDataset, layers } from '../../main';
 import { State } from '../../state';
 import { onDiscardChangesButtonClick } from '../featureDetails/interactiveGeometry';
+import { generateLayerControl } from '../layerControl/generateLayerControl';
 
 export const renderDatasetOptions = () => {
   const selectActiveDataset = document.querySelector('#select-dataset') as HTMLInputElement;
@@ -31,6 +32,12 @@ export const renderDatasetOptions = () => {
     await initDataset();
     flyToActive();
     selectActiveDataset.disabled = false;
-    await fetchData();
+
+    Object.keys(layers).forEach((key) => {
+      featureTypes.length = 0;
+      layers[key].clearLayers();
+    });
+
+    generateLayerControl(featureTypes);
   };
 };

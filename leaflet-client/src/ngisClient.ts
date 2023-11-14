@@ -10,6 +10,10 @@ import { NGISFeature } from './types/feature';
 
 axios.defaults.timeout = DEFAULT_HTTP_TIMEOUT;
 
+export const abortControllers = {
+  getDatasetFeatures: new AbortController(),
+};
+
 const getURL = (path: string, query?: Record<string, string>) => {
   const url = new URL(path, NGIS_PROXY_URL);
   query &&
@@ -29,11 +33,11 @@ export const getDataset = async (): Promise<Dataset> => {
   return response.data;
 };
 
-export const getDatasetFeatures = async (bboxQuery: string, nonPointsFilter?: string): Promise<FeatureCollection> => {
-  const query: Record<string, string> = { crs_EPSG: '4258', bbox: bboxQuery, references: 'all' };
-  if (nonPointsFilter) query['query'] = `in(*,${nonPointsFilter})`;
-
-  const response = await axios.get(getURL(`datasets/${State.activeDataset?.id}/features`, query));
+export const getDatasetFeatures = async (bboxQuery: string): Promise<FeatureCollection> => {
+  const response = await axios.get(
+    getURL(`datasets/${State.activeDataset?.id}/features`, { crs_EPSG: '4258', bbox: bboxQuery, references: 'all' }),
+    { signal: abortControllers.getDatasetFeatures.signal },
+  );
   return response.data;
 };
 

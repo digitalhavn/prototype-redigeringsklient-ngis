@@ -67,11 +67,12 @@ const saveEdits = async () => {
         await updateFeatures(tempEditedFeatures);
         originalFeatures.length = 0;
         tempEditedFeatures.length = 0;
-        await fetchData();
       },
       true,
       discardEdits,
     );
+
+    await makeRequest(fetchData, false);
   }
 };
 

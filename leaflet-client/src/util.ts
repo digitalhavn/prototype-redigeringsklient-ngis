@@ -3,6 +3,8 @@ import { Feature } from 'geojson';
 import { JSONSchema4 } from 'json-schema';
 import { showErrorMessage, showInfoMessage, showSuccessMessage } from './components/alerts/alerts';
 import { TIMEOUT_WARNING } from './config';
+import { State } from './state';
+import { abortControllers } from './ngisClient';
 
 /**
  * Find path to custom marker icon based on feature type and status.
@@ -74,6 +76,7 @@ export const findPath = (feature: Feature) => {
  * @param isLoading - true = show spinner, false = hide spinner
  */
 export const setLoading = (isLoading: boolean) => {
+  State.setLoading(isLoading);
   const loader = document.querySelector('#loading-container') as HTMLDivElement;
   loader.style.display = isLoading ? 'block' : 'none';
 };
@@ -263,7 +266,7 @@ export const getErrorMessage = (error: unknown): (string | Node)[] => {
       });
       return errorMessage;
     } else if (response?.status && response.status >= axios.HttpStatusCode.InternalServerError) {
-      return [`${response.status}: Noe gikk galt med tjeneren. Prøv på nytt senere...`];
+      return [`${response.status}: Noe gikk galt med serveren. Prøv på nytt senere...`];
     } else {
       return ['Noe gikk galt...'];
     }
@@ -289,6 +292,14 @@ export const makeRequest = async (
   successMessage?: string,
   errorMessage?: string,
 ) => {
+  // Cancel any ongoing fetchData request, and try again in 0.1 seconds if loading
+  if (State.isLoading) {
+    abortControllers.getDatasetFeatures.abort();
+    abortControllers.getDatasetFeatures = new AbortController();
+    setTimeout(() => makeRequest(request, showSuccess, onError, successMessage, errorMessage), 100);
+    return;
+  }
+
   setLoading(true);
   const timeoutWarningID = setTimeout(() => {
     showInfoMessage('Forespørselen tar lengere tid enn forventet. Vennligst vent...');
@@ -298,8 +309,10 @@ export const makeRequest = async (
     await request();
     showSuccess && showSuccessMessage(successMessage);
   } catch (error) {
-    showErrorMessage(error, errorMessage);
-    onError?.();
+    if (!axios.isCancel(error)) {
+      showErrorMessage(error, errorMessage);
+      onError?.();
+    }
   }
 
   clearTimeout(timeoutWarningID);
@@ -312,7 +325,7 @@ export const makeRequest = async (
  * @param request Function to debounce
  * @param wait Waiting time in milliseconds
  */
-export const useDebounce = (request: Function, wait: number) => {
+export const useDebounce = (request: () => Promise<void>, wait: number) => {
   let timeout: NodeJS.Timeout;
 
   return () => {

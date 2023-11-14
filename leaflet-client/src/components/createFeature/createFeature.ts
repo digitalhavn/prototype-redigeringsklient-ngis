@@ -3,7 +3,7 @@ import { NGISFeature } from '../../types/feature';
 import { findPath, getPropertyInput, makeRequest } from '../../util';
 import { getFeatureSchema, getGeometryType, getPossibleFeatureTypes } from '../../validation';
 import { JSONSchema4 } from 'json-schema';
-import { addToOrCreateLayer, fetchData, map } from '../../main';
+import { fetchData, map } from '../../main';
 import L from 'leaflet';
 import { onDiscardChangesButtonClick } from '../featureDetails/interactiveGeometry';
 
@@ -107,25 +107,23 @@ const handleSubmit = async () => {
   }
 
   // When marker is placed or line is drawn, create new feature
-  map.on(L.Draw.Event.CREATED, ({ layer }) => {
+  map.on(L.Draw.Event.CREATED, async ({ layer }) => {
+    map.removeEventListener(L.Draw.Event.CREATED);
     const coordinates =
       geometryType === 'Point'
         ? [layer._latlng.lat, layer._latlng.lng, 0]
         : [...layer._latlngs.map(({ lat, lng }: { lat: number; lng: number }) => [lat, lng, 0])];
 
-    makeRequest(async () => {
+    await makeRequest(async () => {
       const editFeaturesSummary = await putFeature(newFeature, coordinates, 'Create');
 
       if (editFeaturesSummary.features_created > 0) {
         newFeature.geometry.coordinates = coordinates;
-        addToOrCreateLayer(newFeature);
         (document.querySelector('[name="feature-type"]') as HTMLSelectElement).value = '';
         (document.querySelector('#choose-feature-properties') as HTMLDivElement).innerHTML = '';
-        map.removeEventListener(L.Draw.Event.CREATED);
       }
-
-      //TODO: fetch kun etter identifikasjon
-      await fetchData();
     });
+
+    await makeRequest(fetchData, false);
   });
 };

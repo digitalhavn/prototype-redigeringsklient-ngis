@@ -3,10 +3,12 @@ import { Dataset } from './types/dataset';
 import { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 
 interface IState {
+  isLoading: boolean;
   datasets: Dataset[];
   activeDataset?: Dataset;
   schema?: JSONSchemaType<any>;
   datasetFeatures: FeatureCollection<Geometry, GeoJsonProperties>;
+  setLoading: Function;
   setDatasets: Function;
   setActiveDataset: Function;
   setSchema: Function;
@@ -14,6 +16,7 @@ interface IState {
 }
 
 export const State: IState = {
+  isLoading: false,
   datasets: [],
   activeDataset: undefined,
   schema: undefined,
@@ -21,6 +24,7 @@ export const State: IState = {
     type: 'FeatureCollection',
     features: [],
   },
+  setLoading: (loading: boolean) => (State.isLoading = loading),
   setDatasets: (datasets: Dataset[]) => (State.datasets = datasets),
   setActiveDataset: (dataset: Dataset) => (State.activeDataset = dataset),
   setSchema: (schema: JSONSchemaType<any>) => (State.schema = schema),

@@ -15,11 +15,11 @@ import {
   MIN_ZOOM_FOR_FETCH,
 } from './config.js';
 import { Feature } from 'geojson';
-import { onMarkerClick } from './components/featureDetails';
+import { onMarkerClick } from './components/featureDetails/featureDetails.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header/header.js';
-import { renderCreateFeature } from './components/createFeature';
+import { renderCreateFeature } from './components/createFeature/createFeature.js';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
 import { renderSearch } from './components/search/search.js';
 import drawLocales from 'leaflet-draw-locales';
@@ -175,10 +175,6 @@ export const initDataset = async () => {
 let currentBounds: L.LatLngBounds | undefined = undefined;
 
 export const fetchData = async () => {
-  if (isEditable || map.getZoom() < MIN_ZOOM_FOR_FETCH) {
-    return;
-  }
-
   currentBounds = map.getBounds();
 
   const { lng: minLng, lat: minLat } = currentBounds.getSouthWest();
@@ -186,36 +182,36 @@ export const fetchData = async () => {
 
   const bboxQuery = `${minLat},${minLng},${maxLat},${maxLng}`;
 
-  await makeRequest(async () => {
-    const datasetFeatures = await getDatasetFeatures(bboxQuery);
+  const datasetFeatures = await getDatasetFeatures(bboxQuery);
 
-    Object.keys(layers).forEach((key) => {
-      featureTypes.length = 0;
-      layers[key].clearLayers();
-    });
+  Object.keys(layers).forEach((key) => {
+    featureTypes.length = 0;
+    layers[key].clearLayers();
+  });
 
-    State.setDatasetFeatures(datasetFeatures);
+  State.setDatasetFeatures(datasetFeatures);
 
-    datasetFeatures.features.forEach((feature) => {
-      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
-      addToOrCreateLayer(feature);
-    });
+  datasetFeatures.features.forEach((feature) => {
+    featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+    addToOrCreateLayer(feature);
+  });
 
-    generateLayerControl(featureTypes);
-  }, false);
+  generateLayerControl(featureTypes);
 };
 
 if (State.datasets.length > 0) {
   await initDataset();
   renderDatasetOptions();
   renderCreateFeature();
-  await fetchData();
+  await makeRequest(fetchData, false);
 
-  const fetchDataDebounced = useDebounce(fetchData, 1000);
+  const fetchDataDebounced = useDebounce(() => makeRequest(fetchData, false), 1000);
 
-  map.on('dragend', () => {
-    // Debounce fetch
-    fetchDataDebounced();
+  map.on('moveend', () => {
+    if (!isEditable && map.getZoom() >= MIN_ZOOM_FOR_FETCH && !currentBounds?.contains(map.getBounds())) {
+      // Debounce fetch
+      fetchDataDebounced();
+    }
   });
 
   map.on('zoomend', () => {
@@ -224,6 +220,5 @@ if (State.datasets.length > 0) {
     } else {
       symbolWMS.bringToFront();
     }
-    fetchDataDebounced();
   });
 }
