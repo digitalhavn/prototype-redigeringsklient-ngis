@@ -13,7 +13,6 @@ import {
   MAP_OPTIONS,
   GEO_JSON_STYLE_OPTIONS,
   NGIS_DEFAULT_DATASET,
-  TILES_API_KEY,
   MIN_ZOOM_FOR_FETCH,
 } from './config.js';
 import { Feature } from 'geojson';
@@ -28,7 +27,6 @@ import drawLocales from 'leaflet-draw-locales';
 import { isEditable, updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
 import { findPath, makeRequest, useDebounce } from './util.js';
 import { NGISFeature } from './types/feature.js';
-import { webatlasTileLayer, WebatlasTileLayerTypes } from 'leaflet-webatlastile';
 
 drawLocales('norwegian');
 
@@ -107,12 +105,9 @@ const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}
 
 const OpenStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
 
-const webAtlas = webatlasTileLayer({ apiKey: TILES_API_KEY, mapType: WebatlasTileLayerTypes.AERIAL });
-
 const baseMaps = {
   GoogleSat: googleSat,
   OpenStreetMap: OpenStreetMap,
-  webAtlas,
 };
 
 export const flyToActive = () => {

@@ -37,7 +37,6 @@
     "leaflet-draw": "^1.0.4",
     "leaflet-draw-locales": "^1.2.3",
     "leaflet-geosearch": "^3.10.2",
-    "leaflet-webatlastile": "^2.1.1",
     "lodash": "^4.17.21"
   }
 }

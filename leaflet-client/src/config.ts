@@ -2,7 +2,6 @@ import { MapOptions, PathOptions } from 'leaflet';
 
 export const NGIS_PROXY_URL: string = import.meta.env.VITE_NGIS_PROXY_URL;
 export const NGIS_DEFAULT_DATASET: string = import.meta.env.VITE_NGIS_DEFAULT_DATASET;
-export const TILES_API_KEY: string = import.meta.env.VITE_TILES_API_KEY;
 
 export const DEFAULT_HTTP_TIMEOUT = 60000 as const;
 export const TIMEOUT_WARNING = 10000 as const;
