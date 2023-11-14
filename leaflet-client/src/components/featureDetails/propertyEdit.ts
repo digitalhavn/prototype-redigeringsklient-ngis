@@ -1,11 +1,13 @@
 import { deleteLayer, updateLayer } from '../../main';
 import { getAndLockFeature, putFeature, updateFeatureProperties } from '../../ngisClient';
 import cloneDeep from 'lodash/cloneDeep';
+import { getValidationSchemaType } from '../../util';
 import { renderGeometry } from './geometryEdit';
 import { handleCancelButtonClick } from './featureDetails';
 import { NGISFeature } from '../../types/feature';
 import { IGNORED_PROPS, READ_ONLY_PROPS } from '../../config';
 import { findSchemaByTitle, getFeatureSchema } from '../../validation';
+import { createMultiSelect } from '../multiselect/multiselect';
 import { makeRequest } from '../../util';
 
 const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement, responseField: HTMLDivElement) => {
@@ -18,7 +20,9 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
       if (!isNaN(parsedValue)) {
         featureProperties[prop] = parsedValue;
       } else {
-        featureProperties[prop] = form[prop].value;
+        getValidationSchemaType(feature, prop) === 'array'
+          ? (featureProperties[prop] = form[prop].value.split(', '))
+          : (featureProperties[prop] = form[prop].value);
       }
     }
   }
@@ -89,7 +93,6 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
       label.textContent = `${prop}:`;
       if (
         READ_ONLY_PROPS.includes(prop) ||
-        Array.isArray(featureProperties[prop]) ||
         (relevantSchema && relevantSchema.properties.properties.properties[prop].readOnly)
       ) {
         // Create a non-editable display field (e.g., a <span>)
@@ -118,6 +121,14 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
 
           // Append the label and select element to the form
           form.append(label, select);
+        } else if (Array.isArray(featureProperties[prop])) {
+          form.append(label);
+          createMultiSelect(
+            form,
+            relevantSchema?.properties.properties.properties[prop].items.oneOf as { const: string; title: string }[],
+            featureProperties[prop],
+            prop,
+          );
         } else {
           // Create an input field for other properties
           const input = document.createElement('input');

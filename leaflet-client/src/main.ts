@@ -5,6 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import './components/layerControl/layerControl.css';
+import './components/multiselect/multiselect.css';
+import './components/featureDetails/featureDetails.css';
 import './components/header/header.css';
 import {
   START_LOCATION,
