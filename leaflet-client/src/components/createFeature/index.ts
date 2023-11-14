@@ -7,6 +7,7 @@ import { fetchData, map } from '../../main';
 import L from 'leaflet';
 
 import './createFeature.css';
+import { getPropValueFromMultiselect, multiselectEmpty } from '../multiselect/multiselect';
 
 const newFeature: NGISFeature = {
   type: 'Feature',
@@ -39,14 +40,16 @@ const handleOpenCreateFeatureModal = () => {
   defaultOption.disabled = true;
   defaultOption.selected = featureTypeSelect.value === '';
 
-  const featureTypeOptions = getPossibleFeatureTypes().reduce((options: HTMLOptionElement[], featureType) => {
-    const option = document.createElement('option');
-    option.value = featureType;
-    option.textContent = featureType;
-    // Remember which value was selected before closing last time
-    option.selected = featureTypeSelect.value === featureType;
-    return [...options, option];
-  }, []);
+  const featureTypeOptions = getPossibleFeatureTypes()
+    .sort()
+    .reduce((options: HTMLOptionElement[], featureType) => {
+      const option = document.createElement('option');
+      option.value = featureType;
+      option.textContent = featureType;
+      // Remember which value was selected before closing last time
+      option.selected = featureTypeSelect.value === featureType;
+      return [...options, option];
+    }, []);
 
   featureTypeSelect.innerHTML = '';
   featureTypeSelect.append(defaultOption);
@@ -80,10 +83,12 @@ const renderPropertyInputs = (featuretype: string) => {
 const handleSubmit = async () => {
   // Delete empty properties
   Object.entries(newFeature.properties).forEach(([property, value]) => {
-    if (
-      (typeof value === 'object' && Object.keys(value).length === 0) ||
-      (Array.isArray(value) && value.length === 0)
-    ) {
+    if (Array.isArray(value)) {
+      const propValue = getPropValueFromMultiselect(property);
+      !multiselectEmpty(propValue)
+        ? (newFeature.properties[property] = propValue.split(', '))
+        : delete newFeature.properties[property];
+    } else if (typeof value === 'object' && Object.keys(value).length === 0) {
       delete newFeature.properties[property];
     }
   });

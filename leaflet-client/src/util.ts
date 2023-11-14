@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { Feature } from 'geojson';
 import { JSONSchema4 } from 'json-schema';
+import { createMultiSelect } from './components/multiselect/multiselect';
+import { NGISFeature } from './types/feature';
+import { getFeatureSchema } from './validation';
 import { showErrorMessage, showInfoMessage, showSuccessMessage } from './components/alerts/alerts';
 import { TIMEOUT_WARNING } from './config';
 
@@ -143,26 +146,8 @@ export const getPropertyInput = (
     }
 
     fieldset.append(legend);
+    createMultiSelect(fieldset, possibleValues as { const: string; title: string }[], null, propertyName);
 
-    (possibleValues as { const: string; title: string }[]).forEach((possibleValue) => {
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.value = possibleValue.const;
-      checkbox.id = checkbox.name = `${propertyName}-${possibleValue.const}`;
-      checkbox.onchange = () => {
-        if (checkbox.checked && !properties[propertyName].includes(possibleValue.const)) {
-          properties[propertyName] = [...properties[propertyName], possibleValue.const];
-        } else if (!checkbox.checked && properties[propertyName].includes(possibleValue.const)) {
-          properties[propertyName] = properties[propertyName].filter((value: string) => value !== possibleValue.const);
-        }
-      };
-
-      const label = document.createElement('label');
-      label.htmlFor = `${propertyName}-${possibleValue.const}`;
-      label.textContent = possibleValue.title;
-
-      fieldset.append(checkbox, label);
-    });
     return fieldset;
   }
 
@@ -236,6 +221,10 @@ export const getPropertyInput = (
   const inputDiv = document.createElement('div');
   inputDiv.append(label, input);
   return inputDiv;
+};
+
+export const getValidationSchemaType = (feature: NGISFeature, prop: string) => {
+  return getFeatureSchema(feature.properties!.featuretype).schema?.properties.properties.properties[prop].type;
 };
 
 /**

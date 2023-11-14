@@ -81,68 +81,30 @@ p {
   margin-top: 5px;
 }
 
-#markerInfo {
-  position: relative;
-  z-index: 1002;
-  /* Add other styles as needed */
-  background-color: white;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
-  flex: 1 1 auto;
-  padding: 0 1rem;
-  height: 100vh;
-  width: 50%; /* Limit the maximum width of the div */
-  overflow-y: auto;
-}
-
-#markerInfo label {
-  color: black;
-  font-weight: bold;
-  display: inline-block; /* Labels and input fields on the same line */
-  width: 30%; /* Adjust the width as needed */
-  margin-right: 10px; /* Add spacing between labels and input fields */
-  text-align: right; /* Align labels to the right */
-}
-
-#markerInfo input[type='text'] {
-  width: 65%; /* Adjust the width as needed */
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  vertical-align: middle; /* Align input fields vertically with labels */
-}
-#markerInfo select {
-  width: 65%; /* Adjust the width as needed */
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  vertical-align: middle; /* Align input fields vertically with labels */
-}
-
-/* CSS for display fields (e.g., <span>) */
-#markerInfo span {
-  display: inline-block; /* Display spans horizontally */
-  width: 65%; /* Match the width of input fields */
-  vertical-align: middle; /* Align spans vertically with labels */
-  margin-right: 10px; /* Add spacing between spans and labels */
-  color: black;
-}
-
-/* CSS for .default-button */
-#markerInfo .default-button {
+.update-message {
+  z-index: 1000;
   display: block;
-  width: 100%;
-  padding: 10px;
-  background-color: #007bff;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #4caf50;
   color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  margin: 10px 0;
+  padding: 10px 20px;
+  border-radius: 5px;
+  opacity: 0;
+}
+.update-message.show {
+  animation: fadeOut 2s ease-in-out forwards;
 }
 
-#markerInfo .default-button:hover {
-  background-color: #0056b3;
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    display: none;
+  }
 }
 
 .container {
@@ -223,19 +185,6 @@ th {
 
 tr:nth-child(even) {
   background-color: #dddddd;
-}
-
-.cancel {
-  position: absolute;
-  background: white;
-  color: black;
-  top: 10px;
-  right: 10px;
-  font-weight: bold;
-}
-
-.cancel:hover {
-  cursor: pointer;
 }
 
 .link {
