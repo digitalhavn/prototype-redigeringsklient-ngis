@@ -305,3 +305,23 @@ export const makeRequest = async (
   clearTimeout(timeoutWarningID);
   setLoading(false);
 };
+
+/**
+ * Returns a function to debounce a request for a certain amount of time
+ *
+ * @param request Function to debounce
+ * @param wait Waiting time in milliseconds
+ */
+export const useDebounce = (request: Function, wait: number) => {
+  let timeout: NodeJS.Timeout;
+
+  return () => {
+    const later = async () => {
+      clearTimeout(timeout);
+      await request();
+    };
+
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};

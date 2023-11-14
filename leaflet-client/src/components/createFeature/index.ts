@@ -107,13 +107,13 @@ const handleSubmit = async () => {
   }
 
   // When marker is placed or line is drawn, create new feature
-  map.on(L.Draw.Event.CREATED, async ({ layer }) => {
+  map.on(L.Draw.Event.CREATED, ({ layer }) => {
     const coordinates =
       geometryType === 'Point'
         ? [layer._latlng.lat, layer._latlng.lng, 0]
         : [...layer._latlngs.map(({ lat, lng }: { lat: number; lng: number }) => [lat, lng, 0])];
 
-    await makeRequest(async () => {
+    makeRequest(async () => {
       const editFeaturesSummary = await putFeature(newFeature, coordinates, 'Create');
 
       if (editFeaturesSummary.features_created > 0) {
@@ -123,8 +123,9 @@ const handleSubmit = async () => {
         (document.querySelector('#choose-feature-properties') as HTMLDivElement).innerHTML = '';
         map.removeEventListener(L.Draw.Event.CREATED);
       }
-    });
 
-    await fetchData(true);
+      //TODO: fetch kun etter identifikasjon
+      await fetchData();
+    });
   });
 };

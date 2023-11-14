@@ -6,7 +6,14 @@ import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import './components/layerControl/layerControl.css';
 import './components/header/header.css';
-import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET, TILES_API_KEY } from './config.js';
+import {
+  START_LOCATION,
+  MAP_OPTIONS,
+  GEO_JSON_STYLE_OPTIONS,
+  NGIS_DEFAULT_DATASET,
+  TILES_API_KEY,
+  MIN_ZOOM_FOR_FETCH,
+} from './config.js';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
@@ -17,9 +24,8 @@ import { generateLayerControl } from './components/layerControl/generateLayerCon
 import { renderSearch } from './components/search/search.js';
 import drawLocales from 'leaflet-draw-locales';
 import { isEditable, updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
-import { findPath, makeRequest } from './util.js';
+import { findPath, makeRequest, useDebounce } from './util.js';
 import { NGISFeature } from './types/feature.js';
-import { showErrorMessage } from './components/alerts/alerts.js';
 import { webatlasTileLayer, WebatlasTileLayerTypes } from 'leaflet-webatlastile';
 
 drawLocales('norwegian');
@@ -168,27 +174,19 @@ export const initDataset = async () => {
 
 let currentBounds: L.LatLngBounds | undefined = undefined;
 
-export const fetchData = async (overrideCheck = false) => {
-  if (!overrideCheck && (isEditable || currentBounds?.contains(map.getBounds()))) {
-    currentBounds = map.getBounds().pad(0.5);
+export const fetchData = async () => {
+  if (isEditable || map.getZoom() < MIN_ZOOM_FOR_FETCH) {
     return;
   }
 
-  currentBounds = map.getBounds().pad(0.5);
+  currentBounds = map.getBounds();
 
   const { lng: minLng, lat: minLat } = currentBounds.getSouthWest();
   const { lng: maxLng, lat: maxLat } = currentBounds.getNorthEast();
 
   const bboxQuery = `${minLat},${minLng},${maxLat},${maxLng}`;
 
-  try {
-    // TODO: filter out all point features from request when zoomed out
-    // let pointsFilter = undefined;
-
-    // if (map.getZoom() < 16) {
-    //   pointsFilter = getNonPointTypes().join(',');
-    // }
-
+  await makeRequest(async () => {
     const datasetFeatures = await getDatasetFeatures(bboxQuery);
 
     Object.keys(layers).forEach((key) => {
@@ -204,9 +202,7 @@ export const fetchData = async (overrideCheck = false) => {
     });
 
     generateLayerControl(featureTypes);
-  } catch (error) {
-    showErrorMessage(error);
-  }
+  }, false);
 };
 
 if (State.datasets.length > 0) {
@@ -215,16 +211,19 @@ if (State.datasets.length > 0) {
   renderCreateFeature();
   await fetchData();
 
-  map.on('dragend', async () => {
-    await fetchData();
+  const fetchDataDebounced = useDebounce(fetchData, 1000);
+
+  map.on('dragend', () => {
+    // Debounce fetch
+    fetchDataDebounced();
   });
 
-  map.on('zoomend', async () => {
-    if (map.getZoom() > 15) {
+  map.on('zoomend', () => {
+    if (map.getZoom() >= MIN_ZOOM_FOR_FETCH) {
       symbolWMS.bringToBack();
     } else {
       symbolWMS.bringToFront();
     }
-    await fetchData();
+    fetchDataDebounced();
   });
 }

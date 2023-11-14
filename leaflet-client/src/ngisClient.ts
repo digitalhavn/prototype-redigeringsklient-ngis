@@ -30,7 +30,7 @@ export const getDataset = async (): Promise<Dataset> => {
 };
 
 export const getDatasetFeatures = async (bboxQuery: string, nonPointsFilter?: string): Promise<FeatureCollection> => {
-  const query: Record<string, string> = { crs_EPSG: '4258', bbox: bboxQuery, references: 'direct' };
+  const query: Record<string, string> = { crs_EPSG: '4258', bbox: bboxQuery, references: 'all' };
   if (nonPointsFilter) query['query'] = `in(*,${nonPointsFilter})`;
 
   const response = await axios.get(getURL(`datasets/${State.activeDataset?.id}/features`, query));
@@ -106,7 +106,7 @@ export const putFeature = async (
 };
 
 export const updateFeatures = async (features: NGISFeature[]) => {
-  const localIdStrings = features.map((feature) => feature.properties!.identifikasjon.lokalId);
+  const localIdStrings = features.map((feature) => feature.properties.identifikasjon.lokalId);
 
   const featuresWithUpdate = features.map((feature) => {
     return {
