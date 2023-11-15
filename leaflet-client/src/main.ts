@@ -8,6 +8,7 @@ import './components/layerControl/layerControl.css';
 import './components/multiselect/multiselect.css';
 import './components/featureDetails/featureDetails.css';
 import './components/header/header.css';
+import './components/layerControl/collapsibleDiv.js';
 import {
   START_LOCATION,
   MAP_OPTIONS,
@@ -41,7 +42,7 @@ export const addToOrCreateLayer = (feature: Feature | NGISFeature, makeDraggable
       pointToLayer: (feature) => {
         const path = findPath(feature);
         const customIcon = L.icon({
-          iconUrl: `/havnesymboler/${path}`,
+          iconUrl: `${import.meta.env.BASE_URL}havnesymboler/${path}`,
           iconSize: [15, 15],
         });
         const [lng, lat] = feature.geometry.coordinates;
