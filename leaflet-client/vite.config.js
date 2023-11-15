@@ -5,6 +5,8 @@ export default defineConfig({
   server: {
     port: 8000,
   },
+  publicDir: 'public/eriksalv/TDT4290-leaflet-client',
+  base: '/eriksalv/TDT4290-leaflet-client/',
   test: {
     coverage: {
       provider: 'v8',

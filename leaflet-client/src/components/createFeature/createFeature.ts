@@ -97,7 +97,7 @@ const handleSubmit = async () => {
 
   const path = findPath(newFeature);
   const customIcon = L.icon({
-    iconUrl: `/havnesymboler/${path}`,
+    iconUrl: `${import.meta.env.BASE_URL}havnesymboler/${path}`,
     iconSize: [15, 15],
   });
 
