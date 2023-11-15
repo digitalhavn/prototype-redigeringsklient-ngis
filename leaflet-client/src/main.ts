@@ -42,7 +42,7 @@ export const addToOrCreateLayer = (feature: Feature | NGISFeature, makeDraggable
       pointToLayer: (feature) => {
         const path = findPath(feature);
         const customIcon = L.icon({
-          iconUrl: `${import.meta.env.BASE_URL}havnesymboler/${path}`,
+          iconUrl: `/havnesymboler/${path}`,
           iconSize: [15, 15],
         });
         const [lng, lat] = feature.geometry.coordinates;
