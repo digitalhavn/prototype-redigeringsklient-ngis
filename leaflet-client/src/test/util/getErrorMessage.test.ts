@@ -32,7 +32,7 @@ describe('getErrorMessage', () => {
     const result = getErrorMessage(error);
 
     expect(result).toHaveLength(1);
-    expect(result[0]).toEqual('500: Noe gikk galt med tjeneren. Prøv på nytt senere...');
+    expect(result[0]).toEqual('500: Noe gikk galt med serveren. Prøv på nytt senere...');
   });
 
   it('should return a specific message for server errors', () => {

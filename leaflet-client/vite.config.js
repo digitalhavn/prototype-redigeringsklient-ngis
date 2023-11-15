@@ -13,4 +13,9 @@ export default defineConfig({
     },
     environment: 'jsdom',
   },
+  esbuild: {
+    supported: {
+      'top-level-await': true, //browsers can handle top-level-await features
+    },
+  },
 });

@@ -7,8 +7,9 @@ export const DEFAULT_HTTP_TIMEOUT = 60000 as const;
 export const TIMEOUT_WARNING = 10000 as const;
 
 export const START_LOCATION: [number, number] = [58.14192796858964, 7.995580766614348];
+export const MIN_ZOOM_FOR_FETCH = 16;
 export const MAP_OPTIONS: MapOptions = {
-  zoom: 15,
+  zoom: 16,
   minZoom: 5,
   maxZoom: 20,
 };

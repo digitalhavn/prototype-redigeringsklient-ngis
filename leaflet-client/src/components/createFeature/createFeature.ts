@@ -5,6 +5,7 @@ import { getFeatureSchema, getGeometryType, getPossibleFeatureTypes } from '../.
 import { JSONSchema4 } from 'json-schema';
 import { fetchData, map } from '../../main';
 import L from 'leaflet';
+import { onDiscardChangesButtonClick } from '../featureDetails/interactiveGeometry';
 
 import './createFeature.css';
 import { getPropValueFromMultiselect, multiselectEmpty } from '../multiselect/multiselect';
@@ -29,6 +30,7 @@ export const renderCreateFeature = () => {
 };
 
 const handleOpenCreateFeatureModal = () => {
+  onDiscardChangesButtonClick();
   const form = document.querySelector('#create-feature-form') as HTMLFormElement;
   form.onsubmit = handleSubmit;
 
@@ -111,6 +113,7 @@ const handleSubmit = async () => {
 
   // When marker is placed or line is drawn, create new feature
   map.on(L.Draw.Event.CREATED, async ({ layer }) => {
+    map.removeEventListener(L.Draw.Event.CREATED);
     const coordinates =
       geometryType === 'Point'
         ? [layer._latlng.lat, layer._latlng.lng, 0]
@@ -120,12 +123,12 @@ const handleSubmit = async () => {
       const editFeaturesSummary = await putFeature(newFeature, coordinates, 'Create');
 
       if (editFeaturesSummary.features_created > 0) {
+        newFeature.geometry.coordinates = coordinates;
         (document.querySelector('[name="feature-type"]') as HTMLSelectElement).value = '';
         (document.querySelector('#choose-feature-properties') as HTMLDivElement).innerHTML = '';
-        map.removeEventListener(L.Draw.Event.CREATED);
       }
     });
 
-    await fetchData();
+    await makeRequest(fetchData, false);
   });
 };

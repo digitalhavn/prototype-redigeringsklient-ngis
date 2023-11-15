@@ -1,3 +1,4 @@
+import { MAP_OPTIONS, START_LOCATION } from '../../config';
 import { layers, map, toggleLayer } from '../../main';
 
 type details = {
@@ -52,3 +53,6 @@ const createCheckbox = (
     ? objectCollapsible?.appendChild(checkboxLabel)
     : areaCollapsible?.appendChild(checkboxLabel);
 };
+
+(document.querySelector('#reset-map-button') as HTMLButtonElement).onclick = () =>
+  map.flyTo(START_LOCATION, MAP_OPTIONS.zoom);

@@ -56,6 +56,22 @@
   background-color: #0056b3;
 }
 
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td,
+th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
 .cancel {
   position: absolute;
   background: white;
@@ -67,4 +83,41 @@
 
 .cancel:hover {
   cursor: pointer;
+}
+
+#confirm-deletion {
+  width: 350px;
+  height: 100px;
+  padding: 10px;
+}
+
+#confirm-deletion h3 {
+  font-size: 18px;
+}
+
+#confirm-deletion button {
+  border-radius: 8px;
+  border: 1px solid;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transform: translateX(85%);
+}
+
+#confirm-deletion-btn {
+  background-color: #ff0000;
+}
+
+#confirm-deletion-btn:hover {
+  background-color: #cc0000;
+}
+
+#close-deletion-btn {
+  background-color: #cccccc;
+}
+
+#close-deletion-btn:hover {
+  background-color: #aaaaaa;
 }

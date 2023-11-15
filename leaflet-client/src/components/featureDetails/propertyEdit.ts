@@ -3,7 +3,7 @@ import { getAndLockFeature, putFeature, updateFeatureProperties } from '../../ng
 import cloneDeep from 'lodash/cloneDeep';
 import { getValidationSchemaType } from '../../util';
 import { renderGeometry } from './geometryEdit';
-import { handleCancelButtonClick } from '.';
+import { handleCancelButtonClick } from './featureDetails';
 import { NGISFeature } from '../../types/feature';
 import { IGNORED_PROPS, READ_ONLY_PROPS } from '../../config';
 import { findSchemaByTitle, getFeatureSchema } from '../../validation';
@@ -28,17 +28,14 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
   }
 
   const { validate } = getFeatureSchema(feature.properties!.featuretype);
-  validate && console.log(validate.schema);
   if (!validate || validate(feature)) {
     await makeRequest(async () => {
       await updateFeatureProperties(feature.properties);
       updateLayer(feature);
     });
   } else {
-    console.log('Validation errors: ', validate.errors);
     const errorMessages = validate
       .errors!.map((error) => {
-        console.log(error);
         if (error.keyword === 'const') {
           return `${error.instancePath.split('/')[2]} must be equal to ${error.params.allowedValue}`;
         } else {

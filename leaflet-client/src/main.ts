@@ -8,22 +8,30 @@ import './components/layerControl/layerControl.css';
 import './components/multiselect/multiselect.css';
 import './components/featureDetails/featureDetails.css';
 import './components/header/header.css';
-import { START_LOCATION, MAP_OPTIONS, GEO_JSON_STYLE_OPTIONS, NGIS_DEFAULT_DATASET } from './config.js';
+import './components/layerControl/collapsibleDiv.js';
+import {
+  START_LOCATION,
+  MAP_OPTIONS,
+  GEO_JSON_STYLE_OPTIONS,
+  NGIS_DEFAULT_DATASET,
+  MIN_ZOOM_FOR_FETCH,
+} from './config.js';
 import { Feature } from 'geojson';
-import { onMarkerClick } from './components/featureDetails';
-import { findPath, makeRequest } from './util.js';
+import { onMarkerClick } from './components/featureDetails/featureDetails.js';
 import { getDataset, getDatasetFeatures, getDatasets, getSchema } from './ngisClient.js';
 import { State } from './state.js';
 import { renderDatasetOptions } from './components/header/header.js';
-import { renderCreateFeature } from './components/createFeature';
+import { renderCreateFeature } from './components/createFeature/createFeature.js';
 import { generateLayerControl } from './components/layerControl/generateLayerControl.js';
 import { renderSearch } from './components/search/search.js';
 import drawLocales from 'leaflet-draw-locales';
-import { updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
+import { isEditable, updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
+import { findPath, makeRequest, useDebounce } from './util.js';
+import { NGISFeature } from './types/feature.js';
 
 drawLocales('norwegian');
 
-export const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = false) => {
+export const addToOrCreateLayer = (feature: Feature | NGISFeature, makeDraggable: boolean = false) => {
   feature.properties!.draggable = makeDraggable;
   const objectType: string = feature.properties!.featuretype;
   if (!layers[objectType]) {
@@ -39,14 +47,15 @@ export const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = fa
         });
         const [lng, lat] = feature.geometry.coordinates;
         const marker = L.marker([lng, lat], { icon: customIcon, draggable: feature.properties!.draggable });
-        delete feature.properties!.draggable;
         marker.on('dragend', (event) => {
           updateEditedFeatures(event);
         });
         return marker;
       },
       onEachFeature: (feature: Feature, layer: L.Layer) => {
-        featuresMap[feature.properties!.identifikasjon.lokalId] = layer;
+        if (feature.properties!.identifikasjon) {
+          featuresMap[feature.properties!.identifikasjon.lokalId] = layer;
+        }
         layer.on('click', onMarkerClick);
       },
       coordsToLatLng: (coords) => {
@@ -55,6 +64,7 @@ export const addToOrCreateLayer = (feature: Feature, makeDraggable: boolean = fa
     });
   }
   layers[objectType].addData(feature);
+  delete feature.properties!.draggable;
 };
 
 export const updateLayer = (updatedFeature: Feature, makeDraggable: boolean = false) => {
@@ -81,7 +91,7 @@ export const layers: Record<string, L.GeoJSON> = {};
 // update and delete already created layers
 const featuresMap: Record<string, Layer> = {};
 
-export const map = L.map('map', { zoomControl: false }).setView(START_LOCATION, 15); // Creating the map object
+export const map = L.map('map', { zoomControl: false, ...MAP_OPTIONS }).setView(START_LOCATION, MAP_OPTIONS.zoom); // Creating the map object
 
 L.control
   .zoom({
@@ -95,6 +105,7 @@ const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}
 });
 
 const OpenStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
+
 const baseMaps = {
   GoogleSat: googleSat,
   OpenStreetMap: OpenStreetMap,
@@ -135,20 +146,6 @@ const symbolWMS = L.tileLayer
   } as WMSOptions)
   .addTo(map);
 
-map.on('zoomend', () => {
-  const currentZoom = map.getZoom();
-  if (currentZoom < 19) {
-    map.addLayer(OpenStreetMap);
-    map.removeLayer(googleSat);
-    depthWMS.bringToFront();
-    symbolWMS.bringToFront();
-  } else if (currentZoom >= 19) {
-    map.addLayer(googleSat);
-    map.removeLayer(OpenStreetMap);
-    depthWMS.bringToFront();
-    symbolWMS.bringToFront();
-  }
-});
 L.control.layers(baseMaps).addTo(map).setPosition('topright');
 
 depthWMS.bringToFront();
@@ -156,7 +153,7 @@ symbolWMS.bringToFront();
 
 renderSearch();
 
-const featureTypes: [string, string][] = [];
+export const featureTypes: [string, string][] = [];
 
 await makeRequest(async () => {
   const datasets = await getDatasets();
@@ -164,29 +161,62 @@ await makeRequest(async () => {
   State.setActiveDataset(datasets.find(({ name }) => name === NGIS_DEFAULT_DATASET) ?? datasets[0]);
 }, false);
 
-export const fetchData = async () => {
-  Object.keys(layers).forEach((key) => {
-    featureTypes.splice(0, featureTypes.length);
-    layers[key].clearLayers();
-  });
-
+export const initDataset = async () => {
   await makeRequest(async () => {
-    const [dataset, schema, datasetFeatures] = await Promise.all([getDataset(), getSchema(), getDatasetFeatures()]);
+    const [dataset, schema] = await Promise.all([getDataset(), getSchema()]);
 
     State.setActiveDataset(dataset);
     State.setSchema(schema);
-
-    datasetFeatures.features.forEach((feature) => {
-      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
-      addToOrCreateLayer(feature);
-    });
-
-    generateLayerControl(featureTypes);
   }, false);
 };
 
+let currentBounds: L.LatLngBounds | undefined = undefined;
+
+export const fetchData = async () => {
+  currentBounds = map.getBounds();
+
+  const { lng: minLng, lat: minLat } = currentBounds.getSouthWest();
+  const { lng: maxLng, lat: maxLat } = currentBounds.getNorthEast();
+
+  const bboxQuery = `${minLat},${minLng},${maxLat},${maxLng}`;
+
+  const datasetFeatures = await getDatasetFeatures(bboxQuery);
+
+  Object.keys(layers).forEach((key) => {
+    featureTypes.length = 0;
+    layers[key].clearLayers();
+  });
+
+  State.setDatasetFeatures(datasetFeatures);
+
+  datasetFeatures.features.forEach((feature) => {
+    featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+    addToOrCreateLayer(feature);
+  });
+
+  generateLayerControl(featureTypes);
+};
+
 if (State.datasets.length > 0) {
-  await fetchData();
+  await initDataset();
   renderDatasetOptions();
   renderCreateFeature();
+  await makeRequest(fetchData, false);
+
+  const fetchDataDebounced = useDebounce(() => makeRequest(fetchData, false), 1000);
+
+  map.on('moveend', () => {
+    if (!isEditable && map.getZoom() >= MIN_ZOOM_FOR_FETCH && !currentBounds?.contains(map.getBounds())) {
+      // Debounce fetch
+      fetchDataDebounced();
+    }
+  });
+
+  map.on('zoomend', () => {
+    if (map.getZoom() >= MIN_ZOOM_FOR_FETCH) {
+      symbolWMS.bringToBack();
+    } else {
+      symbolWMS.bringToFront();
+    }
+  });
 }
