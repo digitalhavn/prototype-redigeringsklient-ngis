@@ -10,10 +10,14 @@ export const MAPTILES_API_KEY: string = import.meta.env.VITE_MAPTILES_API_KEY;
 export const DEFAULT_HTTP_TIMEOUT = 60000 as const;
 export const TIMEOUT_WARNING = 10000 as const;
 
-export const START_LOCATION: [number, number] = [58.14192796858964, 7.995580766614348];
+export const START_LOCATION: [number, number] = [
+  import.meta.env.VITE_START_LOCATION_LAT ?? 58.14192796858964,
+  import.meta.env.VITE_START_LOCATION_LNG ?? 7.995580766614348,
+];
+export const START_ZOOM = import.meta.env.VITE_START_ZOOM ?? 17;
 export const MIN_ZOOM_FOR_FETCH = 17;
 export const MAP_OPTIONS: MapOptions = {
-  zoom: MIN_ZOOM_FOR_FETCH,
+  zoom: START_ZOOM,
   minZoom: 5,
   maxZoom: 20,
 };

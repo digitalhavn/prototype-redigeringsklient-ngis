@@ -14,8 +14,8 @@ import {
   MAP_OPTIONS,
   GEO_JSON_STYLE_OPTIONS,
   NGIS_DEFAULT_DATASET,
-  MIN_ZOOM_FOR_FETCH,
   MAPTILES_API_KEY,
+  MIN_ZOOM_FOR_FETCH,
 } from './config.js';
 import { Feature } from 'geojson';
 import { onMarkerClick } from './components/featureDetails/featureDetails.js';
@@ -192,29 +192,35 @@ export const initDataset = async () => {
 
 let currentBounds: L.LatLngBounds | undefined = undefined;
 
-export const fetchData = async () => {
-  currentBounds = map.getBounds();
+export const fetchData = async (featureCreated = false) => {
+  if (
+    !isEditable &&
+    map.getZoom() >= MIN_ZOOM_FOR_FETCH &&
+    (!currentBounds?.contains(map.getBounds()) || featureCreated)
+  ) {
+    currentBounds = map.getBounds();
 
-  const { lng: minLng, lat: minLat } = currentBounds.getSouthWest();
-  const { lng: maxLng, lat: maxLat } = currentBounds.getNorthEast();
+    const { lng: minLng, lat: minLat } = currentBounds.getSouthWest();
+    const { lng: maxLng, lat: maxLat } = currentBounds.getNorthEast();
 
-  const bboxQuery = `${minLat},${minLng},${maxLat},${maxLng}`;
+    const bboxQuery = `${minLat},${minLng},${maxLat},${maxLng}`;
 
-  const datasetFeatures = await getDatasetFeatures(bboxQuery);
+    const datasetFeatures = await getDatasetFeatures(bboxQuery);
 
-  Object.keys(layers).forEach((key) => {
-    featureTypes.length = 0;
-    layers[key].clearLayers();
-  });
+    Object.keys(layers).forEach((key) => {
+      featureTypes.length = 0;
+      layers[key].clearLayers();
+    });
 
-  State.setDatasetFeatures(datasetFeatures);
+    State.setDatasetFeatures(datasetFeatures);
 
-  datasetFeatures.features.forEach((feature) => {
-    featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
-    addToOrCreateLayer(feature);
-  });
+    datasetFeatures.features.forEach((feature) => {
+      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+      addToOrCreateLayer(feature);
+    });
 
-  generateLayerControl(featureTypes);
+    generateLayerControl(featureTypes);
+  }
 };
 
 if (State.datasets.length > 0) {
@@ -226,8 +232,6 @@ if (State.datasets.length > 0) {
   const fetchDataDebounced = useDebounce(() => makeRequest(fetchData, false), 1000);
 
   map.on('moveend', () => {
-    if (!isEditable && map.getZoom() >= MIN_ZOOM_FOR_FETCH && !currentBounds?.contains(map.getBounds())) {
-      fetchDataDebounced();
-    }
+    fetchDataDebounced();
   });
 }

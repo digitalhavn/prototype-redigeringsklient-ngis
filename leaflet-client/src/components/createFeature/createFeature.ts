@@ -129,6 +129,6 @@ const handleSubmit = async () => {
       }
     });
 
-    await makeRequest(fetchData, false);
+    await makeRequest(() => fetchData(true), false);
   });
 };
