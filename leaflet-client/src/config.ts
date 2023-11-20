@@ -3,13 +3,21 @@ import { MapOptions, PathOptions } from 'leaflet';
 export const NGIS_PROXY_URL: string = import.meta.env.VITE_NGIS_PROXY_URL;
 export const NGIS_DEFAULT_DATASET: string = import.meta.env.VITE_NGIS_DEFAULT_DATASET;
 
+// The maptiles api key is visible to users through network traffic. This is fine
+// since the data it delivers is not sensitive.
+export const MAPTILES_API_KEY: string = import.meta.env.VITE_MAPTILES_API_KEY;
+
 export const DEFAULT_HTTP_TIMEOUT = 60000 as const;
 export const TIMEOUT_WARNING = 10000 as const;
 
-export const START_LOCATION: [number, number] = [58.14192796858964, 7.995580766614348];
-export const MIN_ZOOM_FOR_FETCH = 16;
+export const START_LOCATION: [number, number] = [
+  import.meta.env.VITE_START_LOCATION_LAT ?? 58.14192796858964,
+  import.meta.env.VITE_START_LOCATION_LNG ?? 7.995580766614348,
+];
+export const START_ZOOM = import.meta.env.VITE_START_ZOOM ?? 17;
+export const MIN_ZOOM_FOR_FETCH = 17;
 export const MAP_OPTIONS: MapOptions = {
-  zoom: 16,
+  zoom: START_ZOOM,
   minZoom: 5,
   maxZoom: 20,
 };
@@ -26,6 +34,7 @@ export const GEO_JSON_STYLE_OPTIONS: Record<string, PathOptions> = {
 };
 
 export const IGNORED_PROPS = [
+  'featuretype',
   'avgrensesAvKaiområdeGrense',
   'geometry_properties',
   'avgrensesAvLastbegrensningsområdeGrense',
