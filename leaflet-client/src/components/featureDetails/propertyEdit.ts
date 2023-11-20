@@ -159,13 +159,13 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
 
   // Create "Save" button
   const saveButton = document.createElement('button');
-  saveButton.textContent = 'Save';
+  saveButton.textContent = 'Lagre';
   saveButton.type = 'button';
   saveButton.id = 'save';
   saveButton.className = 'default-button';
 
   const deleteButton = document.createElement('button');
-  deleteButton.textContent = 'Delete';
+  deleteButton.textContent = 'Slett';
   deleteButton.type = 'button';
   deleteButton.id = 'delete';
   deleteButton.className = 'default-button';

@@ -34,6 +34,7 @@ export const GEO_JSON_STYLE_OPTIONS: Record<string, PathOptions> = {
 };
 
 export const IGNORED_PROPS = [
+  'featuretype',
   'avgrensesAvKaiområdeGrense',
   'geometry_properties',
   'avgrensesAvLastbegrensningsområdeGrense',
