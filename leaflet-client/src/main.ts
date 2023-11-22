@@ -14,6 +14,7 @@ import {
   MAP_OPTIONS,
   GEO_JSON_STYLE_OPTIONS,
   NGIS_DEFAULT_DATASET,
+  MAPTILES_API_KEY,
   MIN_ZOOM_FOR_FETCH,
 } from './config.js';
 import { Feature } from 'geojson';
@@ -28,6 +29,7 @@ import drawLocales from 'leaflet-draw-locales';
 import { isEditable, updateEditedFeatures } from './components/featureDetails/interactiveGeometry.js';
 import { findPath, makeRequest, useDebounce } from './util.js';
 import { NGISFeature } from './types/feature.js';
+import { webatlasTileLayer, WebatlasTileLayerTypes } from 'leaflet-webatlastile';
 
 drawLocales('norwegian');
 
@@ -85,6 +87,11 @@ export const toggleLayer = (checkbox: HTMLInputElement) => {
   }
 };
 
+export const flyToActive = () => {
+  const { ur, ll } = State.activeDataset?.bbox!;
+  map.flyToBounds([ur, ll], { duration: 1 });
+};
+
 export const layers: Record<string, L.GeoJSON> = {};
 
 // Maps feature local ID to leaflet layer in order to
@@ -99,36 +106,44 @@ L.control
   })
   .addTo(map);
 
+const webatlasMedium = webatlasTileLayer({ apiKey: MAPTILES_API_KEY, mapType: WebatlasTileLayerTypes.MEDIUM });
+
+const webatlasAerial = webatlasTileLayer({ apiKey: MAPTILES_API_KEY, mapType: WebatlasTileLayerTypes.AERIAL });
+
+const webatlasGrey = webatlasTileLayer({ apiKey: MAPTILES_API_KEY, mapType: WebatlasTileLayerTypes.GREY });
+
 const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
   ...MAP_OPTIONS,
   subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
 });
 
-const OpenStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS).addTo(map);
+const openStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', MAP_OPTIONS);
+
+MAPTILES_API_KEY ? webatlasMedium.addTo(map) : openStreetMap.addTo(map);
 
 const baseMaps = {
-  GoogleSat: googleSat,
-  OpenStreetMap: OpenStreetMap,
+  Basiskart: webatlasMedium,
+  Flyfoto: webatlasAerial,
+  Grå: webatlasGrey,
+  GoogleSatellitt: googleSat,
+  OSM: openStreetMap,
 };
 
-export const flyToActive = () => {
-  const { ur, ll } = State.activeDataset?.bbox!;
-  map.flyToBounds([ur, ll], { duration: 1 });
-};
-
-const depthWMS = new L.TileLayer.WMS('https://wms.geonorge.no/skwms1/wms.dybdedata2', {
-  service: 'WMS',
-  version: '1.3.0',
-  request: 'GetMap',
-  format: 'image/png',
-  layers: 'Dybdedata2',
-  CRS: 'EPSG:4326',
-  bbox: '57.021168,0.228508,71.516049,37.230461',
-  tileSize: 1024,
-  updateWhenIdle: false,
-  transparent: true,
-  crossOrigin: true,
-} as WMSOptions).addTo(map);
+const depthWMS = L.tileLayer
+  .wms('https://wms.geonorge.no/skwms1/wms.dybdedata2', {
+    service: 'WMS',
+    version: '1.3.0',
+    request: 'GetMap',
+    format: 'image/png',
+    layers: 'Dybdedata2',
+    CRS: 'EPSG:4326',
+    bbox: '57.021168,0.228508,71.516049,37.230461',
+    tileSize: 1024,
+    updateWhenIdle: false,
+    transparent: true,
+    crossOrigin: true,
+  } as WMSOptions)
+  .addTo(map);
 
 const symbolWMS = L.tileLayer
   .wms('https://openwms.statkart.no/skwms1/wms.havnedata', {
@@ -146,7 +161,12 @@ const symbolWMS = L.tileLayer
   } as WMSOptions)
   .addTo(map);
 
-L.control.layers(baseMaps).addTo(map).setPosition('topright');
+const overlays = {
+  HavnedataWMS: symbolWMS,
+  DybdedataWMS: depthWMS,
+};
+
+L.control.layers(baseMaps, overlays).addTo(map).setPosition('topright');
 
 depthWMS.bringToFront();
 symbolWMS.bringToFront();
@@ -172,29 +192,35 @@ export const initDataset = async () => {
 
 let currentBounds: L.LatLngBounds | undefined = undefined;
 
-export const fetchData = async () => {
-  currentBounds = map.getBounds();
+export const fetchData = async (featureCreated = false) => {
+  if (
+    !isEditable &&
+    map.getZoom() >= MIN_ZOOM_FOR_FETCH &&
+    (!currentBounds?.contains(map.getBounds()) || featureCreated)
+  ) {
+    currentBounds = map.getBounds();
 
-  const { lng: minLng, lat: minLat } = currentBounds.getSouthWest();
-  const { lng: maxLng, lat: maxLat } = currentBounds.getNorthEast();
+    const { lng: minLng, lat: minLat } = currentBounds.getSouthWest();
+    const { lng: maxLng, lat: maxLat } = currentBounds.getNorthEast();
 
-  const bboxQuery = `${minLat},${minLng},${maxLat},${maxLng}`;
+    const bboxQuery = `${minLat},${minLng},${maxLat},${maxLng}`;
 
-  const datasetFeatures = await getDatasetFeatures(bboxQuery);
+    const datasetFeatures = await getDatasetFeatures(bboxQuery);
 
-  Object.keys(layers).forEach((key) => {
-    featureTypes.length = 0;
-    layers[key].clearLayers();
-  });
+    Object.keys(layers).forEach((key) => {
+      featureTypes.length = 0;
+      layers[key].clearLayers();
+    });
 
-  State.setDatasetFeatures(datasetFeatures);
+    State.setDatasetFeatures(datasetFeatures);
 
-  datasetFeatures.features.forEach((feature) => {
-    featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
-    addToOrCreateLayer(feature);
-  });
+    datasetFeatures.features.forEach((feature) => {
+      featureTypes.push([feature.properties!.featuretype, feature.geometry.type]);
+      addToOrCreateLayer(feature);
+    });
 
-  generateLayerControl(featureTypes);
+    generateLayerControl(featureTypes);
+  }
 };
 
 if (State.datasets.length > 0) {
@@ -206,17 +232,6 @@ if (State.datasets.length > 0) {
   const fetchDataDebounced = useDebounce(() => makeRequest(fetchData, false), 1000);
 
   map.on('moveend', () => {
-    if (!isEditable && map.getZoom() >= MIN_ZOOM_FOR_FETCH && !currentBounds?.contains(map.getBounds())) {
-      // Debounce fetch
-      fetchDataDebounced();
-    }
-  });
-
-  map.on('zoomend', () => {
-    if (map.getZoom() >= MIN_ZOOM_FOR_FETCH) {
-      symbolWMS.bringToBack();
-    } else {
-      symbolWMS.bringToFront();
-    }
+    fetchDataDebounced();
   });
 }
