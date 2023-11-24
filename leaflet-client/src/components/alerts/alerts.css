@@ -1,0 +1,67 @@
+.alert {
+  visibility: hidden;
+  min-width: 250px;
+  background-color: red;
+  color: #fff;
+  text-align: center;
+  position: fixed;
+  z-index: 1000;
+  bottom: 30px;
+  right: 30px;
+  padding: 10px 20px;
+  border-radius: 5px;
+}
+
+.alert.show {
+  visibility: visible;
+  -webkit-animation:
+    fadein 0.5s,
+    fadeout 0.5s 4.7s;
+  animation:
+    fadein 0.5s,
+    fadeout 0.5s 4.7s;
+}
+
+@-webkit-keyframes fadein {
+  from {
+    bottom: 0;
+    opacity: 0;
+  }
+  to {
+    bottom: 30px;
+    opacity: 1;
+  }
+}
+
+@keyframes fadein {
+  from {
+    bottom: 0;
+    opacity: 0;
+  }
+  to {
+    bottom: 30px;
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes fadeout {
+  from {
+    bottom: 30px;
+    opacity: 1;
+  }
+  to {
+    bottom: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes fadeout {
+  from {
+    bottom: 30px;
+    opacity: 1;
+  }
+  to {
+    bottom: 0;
+    opacity: 0;
+  }
+}

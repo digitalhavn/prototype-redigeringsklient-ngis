@@ -1,9 +1,27 @@
+import axios from 'axios';
 import { Feature } from 'geojson';
 import { JSONSchema4 } from 'json-schema';
+import { createMultiSelect } from './components/multiselect/multiselect';
+import { NGISFeature } from './types/feature';
+import { getFeatureSchema } from './validation';
+import { showErrorMessage, showInfoMessage, showSuccessMessage } from './components/alerts/alerts';
+import { TIMEOUT_WARNING } from './config';
+import { State } from './state';
+import { abortControllers } from './ngisClient';
 
+/**
+ * Find path to custom marker icon based on feature type and status.
+ *
+ * @param feature - feature to get custom icon from
+ * @returns path to custom icon as a string
+ */
 export const findPath = (feature: Feature) => {
-  const { featuretype } = feature.properties!;
+  const { featuretype, status } = feature.properties!;
   const basePath = `${featuretype}/${featuretype}`;
+
+  if (status === 'ikkeIBruk') {
+    return 'ikke-i-bruk.png';
+  }
 
   switch (featuretype) {
     case 'Beredskapspunkt':
@@ -55,8 +73,14 @@ export const findPath = (feature: Feature) => {
   }
 };
 
+/**
+ * Toggle loading spinner
+ *
+ * @param isLoading - true = show spinner, false = hide spinner
+ */
 export const setLoading = (isLoading: boolean) => {
-  const loader = document.getElementById('loading-container')!;
+  State.setLoading(isLoading);
+  const loader = document.querySelector('#loading-container') as HTMLDivElement;
   loader.style.display = isLoading ? 'block' : 'none';
 };
 
@@ -125,26 +149,8 @@ export const getPropertyInput = (
     }
 
     fieldset.append(legend);
+    createMultiSelect(fieldset, possibleValues as { const: string; title: string }[], null, propertyName);
 
-    (possibleValues as { const: string; title: string }[]).forEach((possibleValue) => {
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.value = possibleValue.const;
-      checkbox.id = checkbox.name = `${propertyName}-${possibleValue.const}`;
-      checkbox.onchange = () => {
-        if (checkbox.checked && !properties[propertyName].includes(possibleValue.const)) {
-          properties[propertyName] = [...properties[propertyName], possibleValue.const];
-        } else if (!checkbox.checked && properties[propertyName].includes(possibleValue.const)) {
-          properties[propertyName] = properties[propertyName].filter((value: string) => value !== possibleValue.const);
-        }
-      };
-
-      const label = document.createElement('label');
-      label.htmlFor = `${propertyName}-${possibleValue.const}`;
-      label.textContent = possibleValue.title;
-
-      fieldset.append(checkbox, label);
-    });
     return fieldset;
   }
 
@@ -218,4 +224,106 @@ export const getPropertyInput = (
   const inputDiv = document.createElement('div');
   inputDiv.append(label, input);
   return inputDiv;
+};
+
+export const getValidationSchemaType = (feature: NGISFeature, prop: string) => {
+  return getFeatureSchema(feature.properties!.featuretype).schema?.properties.properties.properties[prop].type;
+};
+
+/**
+ * Extract error message from a http error to display in the UI
+ *
+ * @param error - error response
+ * @returns list of strings or {@link HTMLElement} containing the error message
+ */
+export const getErrorMessage = (error: unknown): (string | Node)[] => {
+  if (axios.isAxiosError(error)) {
+    const { code, response } = error;
+    if (code === 'ECONNABORTED') {
+      return ['Forespørselen ble avbrutt fordi det tok for lang tid...'];
+    } else if (response?.status === axios.HttpStatusCode.BadRequest) {
+      console.error(response.data);
+      if (typeof response.data === 'string') {
+        return [response.data];
+      }
+      const { errors, title }: { errors: { lokalid?: string; reason: string }[]; title: string } = response.data;
+      const errorMessage: (string | HTMLElement)[] = [`${title}:`];
+      errors.forEach(({ lokalid, reason }) => {
+        const newError = document.createElement('div');
+        newError.textContent = lokalid ? `lokalid ${lokalid.slice(0, 7)}... - ${reason}` : reason;
+        errorMessage.push(newError);
+      });
+      return errorMessage;
+    } else if (response?.status && response.status >= axios.HttpStatusCode.InternalServerError) {
+      return [`${response.status}: Noe gikk galt med serveren. Prøv på nytt senere...`];
+    } else {
+      return ['Noe gikk galt...'];
+    }
+  } else {
+    return [JSON.stringify(error)];
+  }
+};
+
+/**
+ * Util function for handling loading, errors, and success for a request.
+ * Will also show a info toast if request takes longer than expected.
+ *
+ * @param request - request function
+ * @param showSuccess - whether or not a toast message should be shown when request completes successfully
+ * @param onError - function to run on error (in addition to error toast)
+ * @param successMessage - custom success message
+ * @param errorMessage - custom error message
+ */
+export const makeRequest = async (
+  request: () => Promise<void>,
+  showSuccess: boolean = true,
+  onError?: () => void,
+  successMessage?: string,
+  errorMessage?: string,
+) => {
+  // Cancel any ongoing fetchData request, and try again in 0.1 seconds if loading
+  if (State.isLoading) {
+    abortControllers.getDatasetFeatures.abort();
+    abortControllers.getDatasetFeatures = new AbortController();
+    setTimeout(() => makeRequest(request, showSuccess, onError, successMessage, errorMessage), 100);
+    return;
+  }
+
+  setLoading(true);
+  const timeoutWarningID = setTimeout(() => {
+    showInfoMessage('Forespørselen tar lengere tid enn forventet. Vennligst vent...');
+  }, TIMEOUT_WARNING);
+
+  try {
+    await request();
+    showSuccess && showSuccessMessage(successMessage);
+  } catch (error) {
+    if (!axios.isCancel(error)) {
+      showErrorMessage(error, errorMessage);
+      onError?.();
+    }
+  }
+
+  clearTimeout(timeoutWarningID);
+  setLoading(false);
+};
+
+/**
+ * Returns a function to debounce a request for a certain amount of time
+ *
+ * @param request Function to debounce
+ * @param wait Waiting time in milliseconds
+ */
+export const useDebounce = (request: () => Promise<void>, wait: number) => {
+  let timeout: NodeJS.Timeout;
+
+  return () => {
+    const later = async () => {
+      clearTimeout(timeout);
+      await request();
+    };
+
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 };

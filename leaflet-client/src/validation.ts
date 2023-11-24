@@ -31,6 +31,12 @@ export const findSchemaByTitle = (title: string): JSONSchemaType<any> | undefine
   return State.schema?.properties.features.items.anyOf.find((item: JSONSchema4) => item.title === title);
 };
 
+export const getNonPointTypes = (): string[] => {
+  return State.schema?.properties.features.items.anyOf
+    .filter((item: any) => item.properties.geometry.oneOf[0].properties.type.enum[0] !== 'Point')
+    .map((item: JSONSchema4) => item.title);
+};
+
 /**
  * Get {@link Ajv} validation function based on feature type.
  * Schema is cached for later use

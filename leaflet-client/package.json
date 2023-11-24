@@ -1,7 +1,7 @@
 {
   "name": "leaflet-client",
   "private": true,
-  "version": "0.2.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -22,6 +22,7 @@
     "eslint": "^8.49.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
+    "jsdom": "^22.1.0",
     "prettier": "^3.0.3",
     "typescript": "^5.0.2",
     "vite": "^4.4.5",
@@ -36,6 +37,7 @@
     "leaflet-draw": "^1.0.4",
     "leaflet-draw-locales": "^1.2.3",
     "leaflet-geosearch": "^3.10.2",
+    "leaflet-webatlastile": "^2.1.1",
     "lodash": "^4.17.21"
   }
 }

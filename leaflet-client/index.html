@@ -3,15 +3,15 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <link rel="icon" type="image/svg+xml" href="/logo.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Leaflet Kartklient</title>
+  <title>Digital Havn</title>
 </head>
 
 <body>
 
   <header>
-    <p>Havnedata klient</p>
+    <img src="/logo.png" alt="logo" />
     <select name="select-dataset" id="select-dataset" style="display: none;"></select>
     <button id="saveChanges">Lagre endringer</button>
     <button id="discardChanges">Angre endringer</button>
@@ -20,25 +20,16 @@
 
   <div class="container" id="loading-container">
     <div id="loader">
-      <img src="/wheel.svg"></img>
+      <img src="/wheel.svg" alt="loader"></img>
     </div>
-  </div>
-
-  <div id="updateMessage" class="update-message">
-    <span class="checkmark">&#10004;</span> Endringer lagret
-  </div>
-
-  <div id="errorMessage" class="error-message">
-    <span class="error"></span> Noe gikk galt
   </div>
 
   <div id="object-list">
     <button class="c-side-button" id="create-feature-button">Legg til objekt</button>
-    <button type="button" class="collapsible">Objekter</button>
+    <button type="button" class="collapsible">Punkter</button>
     <div id="object-content" class="c-collapsible-content"></div>
-    <button type="button" class="collapsible">Flater</button>
+    <button type="button" class="collapsible">Linjer og Flater</button>
     <div id="area-content" class="c-collapsible-content"></div>
-    <script src="\src\components\layerControl\collapsibleDiv.ts"></script>
     <button id="reset-map-button" class="c-side-button">Tilbakestill kart</button>
   </div>
   </div>
@@ -52,6 +43,12 @@
       <select id="feature-type" name="feature-type" type="text"></select>
       <div id="choose-feature-properties"></div>
     </form>
+  </dialog>
+
+  <dialog id="confirm-deletion">
+    <h3>Er du sikker på at du vil slette objektet?</h3>
+    <button id="close-deletion-btn">Avbryt</button>
+    <button id="confirm-deletion-btn">Bekreft</button>
   </dialog>
 
   <div id="markerInfo" style="display: none"></div>

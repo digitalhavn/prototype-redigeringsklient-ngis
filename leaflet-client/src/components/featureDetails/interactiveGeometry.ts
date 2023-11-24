@@ -1,49 +1,45 @@
 import L from 'leaflet';
-import { updateLayer } from '../../main';
+import { fetchData, updateLayer } from '../../main';
 import { cloneDeep } from 'lodash';
 import { NGISFeature } from '../../types/feature';
 import { updateFeatures } from '../../ngisClient';
 import { layers } from '../../main';
-import { showErrorMessage } from '../alerts/error';
-import { setLoading } from '../../util';
-import { showUpdateMessage } from '../alerts/update';
+import { Feature } from 'geojson';
+import { makeRequest } from '../../util';
+import { State } from '../../state';
 
-const editMap = (layers: any) => {
+export let isEditable: boolean;
+
+const updateEditable = () => {
   Object.keys(layers).forEach((layerName: any) => {
     const layer = layers[layerName];
     if (layer instanceof L.GeoJSON) {
       layer.eachLayer((marker) => {
         if (marker instanceof L.Marker && marker.options.draggable !== undefined) {
-          marker.options.draggable = true;
+          marker.options.draggable = isEditable;
         }
         if (marker instanceof L.Marker && marker.hasOwnProperty('feature')) {
           const geoJSONFeature = marker as L.Marker & { feature: GeoJSON.Feature };
-          updateLayer(geoJSONFeature.feature, true);
+          updateLayer(geoJSONFeature.feature, isEditable);
         }
       });
     }
   });
 };
 
-export const exitEdit = (layers: any) => {
-  Object.keys(layers).forEach((layerName: any) => {
-    const layer = layers[layerName];
-    if (layer instanceof L.GeoJSON) {
-      layer.eachLayer((marker) => {
-        if (marker instanceof L.Marker && marker.options.draggable !== undefined) {
-          marker.options.draggable = false;
-        }
-        if (marker instanceof L.Marker && marker.hasOwnProperty('feature')) {
-          const geoJSONFeature = marker as L.Marker & { feature: GeoJSON.Feature };
-          updateLayer(geoJSONFeature.feature, false);
-        }
-      });
-    }
-  });
+const editMap = () => {
+  isEditable = true;
+  updateEditable();
+};
+
+export const exitEdit = () => {
+  isEditable = false;
+  updateEditable();
 };
 
 const originalFeatures: NGISFeature[] = [];
-const tempEditedFeatures: NGISFeature[] = [];
+export const tempEditedFeatures: NGISFeature[] = [];
+
 export const updateEditedFeatures = (event: L.DragEndEvent) => {
   const updatedLatLng = event.target.getLatLng();
   if (tempEditedFeatures.includes(event.target.feature)) {
@@ -66,26 +62,34 @@ export const updateEditedFeatures = (event: L.DragEndEvent) => {
 
 const saveEdits = async () => {
   if (tempEditedFeatures.length > 0) {
-    setLoading(true);
-    try {
-      await updateFeatures(tempEditedFeatures);
-      showUpdateMessage();
-      originalFeatures.length = 0;
-      tempEditedFeatures.length = 0;
-    } catch (error) {
-      console.error('Error updating features:', error);
-      showErrorMessage();
-      discardEdits();
-    }
-    setLoading(false);
+    await makeRequest(
+      async () => {
+        await updateFeatures(tempEditedFeatures);
+        originalFeatures.length = 0;
+        tempEditedFeatures.length = 0;
+      },
+      true,
+      discardEdits,
+    );
+
+    await makeRequest(fetchData, false);
   }
 };
 
 export const discardEdits = () => {
   if (originalFeatures.length > 0) {
-    originalFeatures.forEach((feature: NGISFeature) => {
-      updateLayer(feature);
+    // Iterate through originalFeatures and update datasetFeatures.features
+    originalFeatures.forEach((originalFeature: NGISFeature) => {
+      const originalId = originalFeature.properties.identifikasjon.lokalId;
+      const index = State.datasetFeatures.features.findIndex(
+        (feature: Feature) => feature.properties!.identifikasjon.lokalId === originalId,
+      );
+      if (index !== -1) {
+        State.datasetFeatures.features[index] = originalFeature;
+        updateLayer(originalFeature);
+      }
     });
+
     tempEditedFeatures.length = 0;
     originalFeatures.length = 0;
   }
@@ -99,21 +103,23 @@ editMapButton!.addEventListener('click', () => {
   editMapButton!.style.display = 'none';
   saveChangesButton!.style.display = 'block';
   discardChangesButton!.style.display = 'block';
-  editMap(layers);
+  editMap();
 });
 
-saveChangesButton!.addEventListener('click', () => {
+saveChangesButton!.addEventListener('click', async () => {
   saveChangesButton!.style.display = 'none';
   discardChangesButton!.style.display = 'none';
-  saveEdits();
   editMapButton!.style.display = 'block';
-  exitEdit(layers);
+  exitEdit();
+  await saveEdits();
 });
 
-discardChangesButton!.addEventListener('click', () => {
+discardChangesButton!.addEventListener('click', () => onDiscardChangesButtonClick());
+
+export const onDiscardChangesButtonClick = () => {
   saveChangesButton!.style.display = 'none';
   discardChangesButton!.style.display = 'none';
   discardEdits();
   editMapButton!.style.display = 'block';
-  exitEdit(layers);
-});
+  exitEdit();
+};

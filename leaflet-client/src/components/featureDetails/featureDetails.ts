@@ -19,7 +19,7 @@ export const onMarkerClick = (e: { target: { feature: NGISFeature } }) => {
 
   cancelButton.addEventListener('click', handleCancelButtonClick);
 
-  markerInfoDiv.append(content, cancelButton);
+  markerInfoDiv.append(cancelButton, content);
 
   // Display the div
   markerInfoDiv.style.display = 'block';

@@ -1,13 +1,14 @@
 import { putFeature } from '../../ngisClient';
 import { NGISFeature } from '../../types/feature';
-import { findPath, getPropertyInput, setLoading } from '../../util';
+import { findPath, getPropertyInput, makeRequest } from '../../util';
 import { getFeatureSchema, getGeometryType, getPossibleFeatureTypes } from '../../validation';
 import { JSONSchema4 } from 'json-schema';
-import { showUpdateMessage } from '../alerts/update';
 import { fetchData, map } from '../../main';
 import L from 'leaflet';
+import { onDiscardChangesButtonClick } from '../featureDetails/interactiveGeometry';
 
 import './createFeature.css';
+import { getPropValueFromMultiselect, multiselectEmpty } from '../multiselect/multiselect';
 
 const newFeature: NGISFeature = {
   type: 'Feature',
@@ -29,6 +30,7 @@ export const renderCreateFeature = () => {
 };
 
 const handleOpenCreateFeatureModal = () => {
+  onDiscardChangesButtonClick();
   const form = document.querySelector('#create-feature-form') as HTMLFormElement;
   form.onsubmit = handleSubmit;
 
@@ -40,14 +42,16 @@ const handleOpenCreateFeatureModal = () => {
   defaultOption.disabled = true;
   defaultOption.selected = featureTypeSelect.value === '';
 
-  const featureTypeOptions = getPossibleFeatureTypes().reduce((options: HTMLOptionElement[], featureType) => {
-    const option = document.createElement('option');
-    option.value = featureType;
-    option.textContent = featureType;
-    // Remember which value was selected before closing last time
-    option.selected = featureTypeSelect.value === featureType;
-    return [...options, option];
-  }, []);
+  const featureTypeOptions = getPossibleFeatureTypes()
+    .sort()
+    .reduce((options: HTMLOptionElement[], featureType) => {
+      const option = document.createElement('option');
+      option.value = featureType;
+      option.textContent = featureType;
+      // Remember which value was selected before closing last time
+      option.selected = featureTypeSelect.value === featureType;
+      return [...options, option];
+    }, []);
 
   featureTypeSelect.innerHTML = '';
   featureTypeSelect.append(defaultOption);
@@ -81,10 +85,12 @@ const renderPropertyInputs = (featuretype: string) => {
 const handleSubmit = async () => {
   // Delete empty properties
   Object.entries(newFeature.properties).forEach(([property, value]) => {
-    if (
-      (typeof value === 'object' && Object.keys(value).length === 0) ||
-      (Array.isArray(value) && value.length === 0)
-    ) {
+    if (Array.isArray(value)) {
+      const propValue = getPropValueFromMultiselect(property);
+      !multiselectEmpty(propValue)
+        ? (newFeature.properties[property] = propValue.split(', '))
+        : delete newFeature.properties[property];
+    } else if (typeof value === 'object' && Object.keys(value).length === 0) {
       delete newFeature.properties[property];
     }
   });
@@ -105,34 +111,24 @@ const handleSubmit = async () => {
     new L.Draw.Polyline(map).enable();
   }
 
-  let i = 0;
-
   // When marker is placed or line is drawn, create new feature
   map.on(L.Draw.Event.CREATED, async ({ layer }) => {
-    i++;
-    // Should only print 1
-    console.log(i);
+    map.removeEventListener(L.Draw.Event.CREATED);
     const coordinates =
       geometryType === 'Point'
         ? [layer._latlng.lat, layer._latlng.lng, 0]
         : [...layer._latlngs.map(({ lat, lng }: { lat: number; lng: number }) => [lat, lng, 0])];
 
-    setLoading(true);
-
-    try {
+    await makeRequest(async () => {
       const editFeaturesSummary = await putFeature(newFeature, coordinates, 'Create');
 
       if (editFeaturesSummary.features_created > 0) {
-        showUpdateMessage();
+        newFeature.geometry.coordinates = coordinates;
         (document.querySelector('[name="feature-type"]') as HTMLSelectElement).value = '';
         (document.querySelector('#choose-feature-properties') as HTMLDivElement).innerHTML = '';
-        await fetchData();
       }
-    } catch (error) {
-      // TODO: show error notification
-      console.log(error);
-    }
+    });
 
-    setLoading(false);
+    await makeRequest(() => fetchData(true), false);
   });
 };

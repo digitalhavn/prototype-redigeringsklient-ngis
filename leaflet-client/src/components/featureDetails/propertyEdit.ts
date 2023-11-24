@@ -1,16 +1,16 @@
-import { deleteLayer } from '../../main';
+import { deleteLayer, updateLayer } from '../../main';
 import { getAndLockFeature, putFeature, updateFeatureProperties } from '../../ngisClient';
 import cloneDeep from 'lodash/cloneDeep';
-import { setLoading } from '../../util';
-import { showUpdateMessage } from '../alerts/update';
+import { getValidationSchemaType } from '../../util';
 import { renderGeometry } from './geometryEdit';
-import { handleCancelButtonClick } from '.';
+import { handleCancelButtonClick } from './featureDetails';
 import { NGISFeature } from '../../types/feature';
 import { IGNORED_PROPS, READ_ONLY_PROPS } from '../../config';
 import { findSchemaByTitle, getFeatureSchema } from '../../validation';
+import { createMultiSelect } from '../multiselect/multiselect';
+import { makeRequest } from '../../util';
 
 const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement, responseField: HTMLDivElement) => {
-  setLoading(true);
   const featureCopy = cloneDeep(feature);
 
   const featureProperties = feature.properties;
@@ -20,23 +20,22 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
       if (!isNaN(parsedValue)) {
         featureProperties[prop] = parsedValue;
       } else {
-        featureProperties[prop] = form[prop].value;
+        getValidationSchemaType(feature, prop) === 'array'
+          ? (featureProperties[prop] = form[prop].value.split(', '))
+          : (featureProperties[prop] = form[prop].value);
       }
     }
   }
 
   const { validate } = getFeatureSchema(feature.properties!.featuretype);
-  validate && console.log(validate.schema);
   if (!validate || validate(feature)) {
-    handleCancelButtonClick();
-    console.log('Data is valid');
-    await updateFeatureProperties(feature.properties);
-    showUpdateMessage();
+    await makeRequest(async () => {
+      await updateFeatureProperties(feature.properties);
+      updateLayer(feature);
+    });
   } else {
-    console.log('Validation errors: ', validate.errors);
     const errorMessages = validate
       .errors!.map((error) => {
-        console.log(error);
         if (error.keyword === 'const') {
           return `${error.instancePath.split('/')[2]} must be equal to ${error.params.allowedValue}`;
         } else {
@@ -46,26 +45,29 @@ const handleSaveButtonClick = async (feature: NGISFeature, form: HTMLFormElement
       .join(', ');
     responseField.style.color = 'red'; // Set text color to red
     responseField.textContent = `Validation errors: ${errorMessages}`;
-    feature = featureCopy;
+    feature.properties = featureCopy.properties;
   }
-  setLoading(false);
 };
 
 const handleDeleteButtonClick = async (feature: NGISFeature) => {
-  setLoading(true);
+  const modal = document.querySelector('#confirm-deletion') as HTMLDialogElement;
+  const confirmButton = document.querySelector('#confirm-deletion-btn') as HTMLButtonElement;
+  const closeButton = document.querySelector('#close-deletion-btn') as HTMLButtonElement;
 
-  await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
+  modal.showModal();
+  closeButton.onclick = () => {
+    modal.close();
+  };
+  confirmButton.onclick = async () => {
+    modal.close();
+    await makeRequest(async () => {
+      await getAndLockFeature(feature.properties!.identifikasjon.lokalId);
+      await putFeature(feature, feature.geometry.coordinates, 'Erase');
 
-  const saveResponse = await putFeature(feature, feature.geometry.coordinates, 'Erase');
-
-  if (saveResponse.features_erased > 0) {
-    deleteLayer(feature);
-    handleCancelButtonClick();
-    console.info('Feature was deleted');
-  } else {
-    console.error('Feature was not deleted');
-  }
-  setLoading(false);
+      deleteLayer(feature);
+      handleCancelButtonClick();
+    });
+  };
 };
 
 export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElement) => {
@@ -91,7 +93,6 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
       label.textContent = `${prop}:`;
       if (
         READ_ONLY_PROPS.includes(prop) ||
-        Array.isArray(featureProperties[prop]) ||
         (relevantSchema && relevantSchema.properties.properties.properties[prop].readOnly)
       ) {
         // Create a non-editable display field (e.g., a <span>)
@@ -120,6 +121,14 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
 
           // Append the label and select element to the form
           form.append(label, select);
+        } else if (Array.isArray(featureProperties[prop])) {
+          form.append(label);
+          createMultiSelect(
+            form,
+            relevantSchema?.properties.properties.properties[prop].items.oneOf as { const: string; title: string }[],
+            featureProperties[prop],
+            prop,
+          );
         } else {
           // Create an input field for other properties
           const input = document.createElement('input');
@@ -150,13 +159,13 @@ export const renderProperties = (feature: NGISFeature, contentDiv: HTMLDivElemen
 
   // Create "Save" button
   const saveButton = document.createElement('button');
-  saveButton.textContent = 'Save';
+  saveButton.textContent = 'Lagre';
   saveButton.type = 'button';
   saveButton.id = 'save';
   saveButton.className = 'default-button';
 
   const deleteButton = document.createElement('button');
-  deleteButton.textContent = 'Delete';
+  deleteButton.textContent = 'Slett';
   deleteButton.type = 'button';
   deleteButton.id = 'delete';
   deleteButton.className = 'default-button';

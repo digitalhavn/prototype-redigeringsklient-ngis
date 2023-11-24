@@ -11,7 +11,7 @@ const NGIS_USERNAME = process.env.NGIS_USERNAME || 'ngis-username';
 const NGIS_PASSWORD = process.env.NGIS_PASSWORD || 'ngis-password';
 const NGIS_TOKEN = basicAuthEncode(NGIS_USERNAME, NGIS_PASSWORD);
 
-const PORT = 8001;
+const PORT = process.env.PORT || 8001;
 const BASE_HEADERS = {
   Authorization: `Basic ${NGIS_TOKEN}`,
   'X-Client-Product-Version': 'NGISProxy 1.0.0',
@@ -22,7 +22,6 @@ const proxy: RequestHandler = createProxyMiddleware({
   headers: BASE_HEADERS,
   changeOrigin: true,
   logLevel: 'debug',
-  secure: false,
 });
 
 app.use(cors());
