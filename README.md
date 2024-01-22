@@ -1,7 +1,3 @@
-## Dataset as geopkg:
-
-- https://norkartit-my.sharepoint.com/:f:/g/personal/alenos_norkart_no/Enjx4ENJjwFLn75LNKiEFqUBR2rrSc76ldxPcfaVEM9-4Q?e=sGc5FN
-
 ## Install dependencies
 
 - `npm install` from the root folder to install all dependencies
